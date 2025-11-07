@@ -14,11 +14,11 @@ uvx pdsx --help
 
 ```bash
 # read anyone's posts (no auth)
-pdsx -r did:plc:o53crari67ge7bvbv273lxln ls app.bsky.feed.post -o json | jq -r '.[].text'
+uvx pdsx -r did:plc:o53crari67ge7bvbv273lxln ls app.bsky.feed.post -o json | jq -r '.[].text'
 
 # update your bio (with auth)
 export ATPROTO_HANDLE=your.handle ATPROTO_PASSWORD=your-password
-pdsx edit app.bsky.actor.profile/self description='new bio'
+uvx pdsx edit app.bsky.actor.profile/self description='new bio'
 ```
 
 ## features
