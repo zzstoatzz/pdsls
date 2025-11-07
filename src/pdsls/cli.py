@@ -88,6 +88,13 @@ async def async_main() -> int:
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
+    # version flag
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"pdsls {__import__('pdsls').__version__}",
+    )
+
     # global auth options only
     parser.add_argument("--handle", help="atproto handle")
     parser.add_argument("--password", help="atproto password")
