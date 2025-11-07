@@ -90,6 +90,7 @@ async def async_main() -> int:
 
     # version flag
     parser.add_argument(
+        "-v",
         "--version",
         action="version",
         version=f"pdsls {__import__('pdsls').__version__}",
