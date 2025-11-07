@@ -13,24 +13,24 @@ warnings.filterwarnings("ignore", category=UserWarning, module="pydantic")
 
 from atproto import AsyncClient  # noqa: E402
 
-from pdsls._internal.auth import login  # noqa: E402
-from pdsls._internal.config import settings  # noqa: E402
-from pdsls._internal.display import (  # noqa: E402
+from pdsx._internal.auth import login  # noqa: E402
+from pdsx._internal.config import settings  # noqa: E402
+from pdsx._internal.display import (  # noqa: E402
     console,
     display_record,
     display_records,
     display_success,
 )
-from pdsls._internal.operations import (  # noqa: E402
+from pdsx._internal.operations import (  # noqa: E402
     create_record,
     delete_record,
     get_record,
     list_records,
     update_record,
 )
-from pdsls._internal.output import OutputFormat  # noqa: E402
-from pdsls._internal.parsing import parse_key_value_args  # noqa: E402
-from pdsls._internal.types import RecordValue  # noqa: E402
+from pdsx._internal.output import OutputFormat  # noqa: E402
+from pdsx._internal.parsing import parse_key_value_args  # noqa: E402
+from pdsx._internal.types import RecordValue  # noqa: E402
 
 
 async def cmd_list(
@@ -93,7 +93,7 @@ async def async_main() -> int:
         "-v",
         "--version",
         action="version",
-        version=f"pdsls {__import__('pdsls').__version__}",
+        version=f"pdsx {__import__('pdsx').__version__}",
     )
 
     # global identity flag - can be handle or DID

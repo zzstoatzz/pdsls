@@ -1,4 +1,4 @@
-name: Publish pdsls to PyPI
+name: Publish pdsx to PyPI
 on:
   release:
     types: [published]

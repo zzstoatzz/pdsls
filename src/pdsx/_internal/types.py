@@ -1,4 +1,4 @@
-"""type aliases for pdsls."""
+"""type aliases for pdsx."""
 
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-"""configuration management for pdsls."""
+"""configuration management for pdsx."""
 
 from __future__ import annotations
 

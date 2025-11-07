@@ -1,13 +1,13 @@
-# pdsls
+# pdsx
 
 general-purpose cli for atproto record operations
 
 ## installation
 
 ```bash
-uv add pdsls
+uv add pdsx
 # or
-uvx pdsls --help
+uvx pdsx --help
 ```
 
 ## quick start
@@ -22,19 +22,19 @@ export ATPROTO_PASSWORD=your-password
 list posts (compact format by default):
 
 ```bash
-pdsls ls app.bsky.feed.post --limit 10
+pdsx ls app.bsky.feed.post --limit 10
 ```
 
 json output for jq:
 
 ```bash
-pdsls ls app.bsky.feed.post -o json | jq '.[].text'
+pdsx ls app.bsky.feed.post -o json | jq '.[].text'
 ```
 
 table view:
 
 ```bash
-pdsls ls app.bsky.feed.post -o table
+pdsx ls app.bsky.feed.post -o table
 ```
 
 ## features
@@ -53,47 +53,47 @@ pdsls ls app.bsky.feed.post -o table
 
 ```bash
 # using full command
-pdsls list app.bsky.feed.post --limit 5
+pdsx list app.bsky.feed.post --limit 5
 
 # using alias
-pdsls ls app.bsky.feed.post --limit 5 -o json
+pdsx ls app.bsky.feed.post --limit 5 -o json
 ```
 
 ### get a record
 
 ```bash
 # using full command
-pdsls get at://did:plc:example/app.bsky.feed.post/123
+pdsx get at://did:plc:example/app.bsky.feed.post/123
 
 # using alias
-pdsls cat at://did:plc:example/app.bsky.feed.post/123
+pdsx cat at://did:plc:example/app.bsky.feed.post/123
 ```
 
 ### create a record
 
 ```bash
-pdsls create app.bsky.feed.like subject='at://...' createdAt='2024-01-01T00:00:00Z'
+pdsx create app.bsky.feed.like subject='at://...' createdAt='2024-01-01T00:00:00Z'
 
 # using alias
-pdsls touch app.bsky.feed.like subject='at://...' createdAt='2024-01-01T00:00:00Z'
+pdsx touch app.bsky.feed.like subject='at://...' createdAt='2024-01-01T00:00:00Z'
 ```
 
 ### update a record
 
 ```bash
-pdsls update at://did:plc:example/app.bsky.feed.post/123 text='updated text'
+pdsx update at://did:plc:example/app.bsky.feed.post/123 text='updated text'
 
 # using alias
-pdsls edit at://did:plc:example/app.bsky.feed.post/123 text='updated text'
+pdsx edit at://did:plc:example/app.bsky.feed.post/123 text='updated text'
 ```
 
 ### delete a record
 
 ```bash
-pdsls delete at://did:plc:example/app.bsky.feed.post/123
+pdsx delete at://did:plc:example/app.bsky.feed.post/123
 
 # using alias
-pdsls rm at://did:plc:example/app.bsky.feed.post/123
+pdsx rm at://did:plc:example/app.bsky.feed.post/123
 ```
 
 ## output formats
@@ -113,7 +113,7 @@ app.bsky.feed.post (3 records)
 clean json for piping to jq:
 
 ```bash
-pdsls ls app.bsky.feed.post -o json | jq '.[].text'
+pdsx ls app.bsky.feed.post -o json | jq '.[].text'
 ```
 
 ### table
@@ -121,7 +121,7 @@ pdsls ls app.bsky.feed.post -o json | jq '.[].text'
 pretty table for terminal viewing:
 
 ```bash
-pdsls ls app.bsky.feed.post -o table
+pdsx ls app.bsky.feed.post -o table
 ```
 
 ## examples
@@ -131,19 +131,19 @@ pdsls ls app.bsky.feed.post -o table
 
 ### read anyone's bio
 ```bash
-uvx pdsls --repo did:plc:o53crari67ge7bvbv273lxln list app.bsky.actor.profile -o json | \
+uvx pdsx --repo did:plc:o53crari67ge7bvbv273lxln list app.bsky.actor.profile -o json | \
   jq -r '.[0].description'
 ```
 
 ### update your bio
 ```bash
 export ATPROTO_HANDLE=your.handle ATPROTO_PASSWORD=your-password
-uvx pdsls edit app.bsky.actor.profile/self description='new bio'
+uvx pdsx edit app.bsky.actor.profile/self description='new bio'
 ```
 
 ### read anyone's posts
 ```bash
-uvx pdsls -r did:plc:o53crari67ge7bvbv273lxln list app.bsky.feed.post --limit 5 -o json | \
+uvx pdsx -r did:plc:o53crari67ge7bvbv273lxln list app.bsky.feed.post --limit 5 -o json | \
   jq -r '.[] | .text'
 ```
 
@@ -155,8 +155,8 @@ uvx pdsls -r did:plc:o53crari67ge7bvbv273lxln list app.bsky.feed.post --limit 5 
 
 ```bash
 # clone repo
-git clone https://github.com/zzstoatzz/pdsls
-cd pdsls
+git clone https://github.com/zzstoatzz/pdsx
+cd pdsx
 
 # install with dev dependencies
 uv sync

@@ -6,8 +6,8 @@ import pytest
 from atproto_client.models.dot_dict import DotDict
 from pydantic import BaseModel
 
-from pdsls._internal.display import display_records
-from pdsls._internal.output import OutputFormat
+from pdsx._internal.display import display_records
+from pdsx._internal.output import OutputFormat
 
 
 class MockPydanticValue(BaseModel):

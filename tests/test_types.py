@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from pdsls._internal.types import RecordValue
+from pdsx._internal.types import RecordValue
 
 
 def test_record_value_type_alias() -> None:

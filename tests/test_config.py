@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 
-from pdsls._internal.config import Settings
+from pdsx._internal.config import Settings
 
 
 def test_settings_defaults() -> None:

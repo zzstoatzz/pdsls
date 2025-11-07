@@ -11,7 +11,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-from pdsls._internal.output import OutputFormat
+from pdsx._internal.output import OutputFormat
 
 if TYPE_CHECKING:
     from atproto import models

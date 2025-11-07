@@ -1,1 +1,1 @@
-"""tests for pdsls."""
+"""tests for pdsx."""
