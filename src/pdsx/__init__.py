@@ -2,6 +2,11 @@
 
 from __future__ import annotations
 
-__version__ = "0.0.0"
+import importlib.metadata
+
+try:
+    __version__ = importlib.metadata.version("pdsx")
+except importlib.metadata.PackageNotFoundError:
+    __version__ = "0.0.0"  # fallback for development mode
 
 __all__ = ["__version__"]

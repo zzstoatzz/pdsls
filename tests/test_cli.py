@@ -16,6 +16,8 @@ def test_version_flag_long() -> None:
     assert result.returncode == 0
     output = result.stdout.strip()
     assert output.startswith("pdsx ")
+    # ensure we're not showing the hardcoded fallback version
+    assert output != "pdsx 0.0.0"
 
 
 def test_version_flag_short() -> None:

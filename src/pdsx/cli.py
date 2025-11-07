@@ -13,6 +13,7 @@ warnings.filterwarnings("ignore", category=UserWarning, module="pydantic")
 
 from atproto import AsyncClient  # noqa: E402
 
+from pdsx import __version__  # noqa: E402
 from pdsx._internal.auth import login  # noqa: E402
 from pdsx._internal.config import settings  # noqa: E402
 from pdsx._internal.display import (  # noqa: E402
@@ -93,7 +94,7 @@ async def async_main() -> int:
         "-v",
         "--version",
         action="version",
-        version=f"pdsx {__import__('pdsx').__version__}",
+        version=f"pdsx {__version__}",
     )
 
     # global identity flag - can be handle or DID
