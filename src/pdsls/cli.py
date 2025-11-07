@@ -28,7 +28,7 @@ from pdsls._internal.operations import (  # noqa: E402
     list_records,
     update_record,
 )
-from pdsls._internal.output import OutputFormat, is_tty  # noqa: E402
+from pdsls._internal.output import OutputFormat  # noqa: E402
 from pdsls._internal.parsing import parse_key_value_args  # noqa: E402
 from pdsls._internal.types import RecordValue  # noqa: E402
 
