@@ -40,8 +40,8 @@ uvx pdsx edit app.bsky.actor.profile/self description='new bio'
 # list records from any repo
 pdsx -r did:plc:... ls app.bsky.feed.post --limit 5 -o json
 
-# get a specific record
-pdsx cat at://did:plc:example/app.bsky.feed.post/123
+# read someone's bio
+pdsx -r did:plc:o53crari67ge7bvbv273lxln ls app.bsky.actor.profile -o json | jq -r '.[0].description'
 ```
 
 ### write operations (auth required)
