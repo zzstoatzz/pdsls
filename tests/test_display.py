@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 from atproto_client.models.dot_dict import DotDict
 from pydantic import BaseModel
 
@@ -25,7 +26,7 @@ class MockRecord:
         self.value = value
 
 
-def test_display_records_with_pydantic_model(capsys):
+def test_display_records_with_pydantic_model(capsys: pytest.CaptureFixture[str]) -> None:
     """test display_records handles pydantic models correctly."""
     value = MockPydanticValue(title="test", text="hello world")
     record = MockRecord(
@@ -42,7 +43,7 @@ def test_display_records_with_pydantic_model(capsys):
     assert '"text":"hello world"' in captured.out
 
 
-def test_display_records_with_dotdict(capsys):
+def test_display_records_with_dotdict(capsys: pytest.CaptureFixture[str]) -> None:
     """regression test for issue #1 - DotDict values should work."""
     value = DotDict({"title": "test track", "artist": "stoat", "fileType": "m4a"})
     record = MockRecord(
@@ -60,7 +61,7 @@ def test_display_records_with_dotdict(capsys):
     assert '"fileType":"m4a"' in captured.out
 
 
-def test_display_records_with_plain_dict(capsys):
+def test_display_records_with_plain_dict(capsys: pytest.CaptureFixture[str]) -> None:
     """test display_records handles plain dicts."""
     value = {"title": "test", "content": "some content"}
     record = MockRecord(
