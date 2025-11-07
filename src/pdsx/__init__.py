@@ -1,4 +1,4 @@
-"""pdsls - general-purpose cli for atproto record operations."""
+"""pdsx - general-purpose cli for atproto record operations."""
 
 from __future__ import annotations
 

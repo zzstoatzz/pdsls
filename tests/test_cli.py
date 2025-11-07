@@ -8,24 +8,24 @@ import subprocess
 def test_version_flag_long() -> None:
     """test --version flag displays version."""
     result = subprocess.run(
-        ["pdsls", "--version"],
+        ["pdsx", "--version"],
         capture_output=True,
         text=True,
         check=False,
     )
     assert result.returncode == 0
     output = result.stdout.strip()
-    assert output.startswith("pdsls ")
+    assert output.startswith("pdsx ")
 
 
 def test_version_flag_short() -> None:
     """test -v flag displays version."""
     result = subprocess.run(
-        ["pdsls", "-v"],
+        ["pdsx", "-v"],
         capture_output=True,
         text=True,
         check=False,
     )
     assert result.returncode == 0
     output = result.stdout.strip()
-    assert output.startswith("pdsls ")
+    assert output.startswith("pdsx ")

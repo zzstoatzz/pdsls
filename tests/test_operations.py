@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 from atproto import AsyncClient, models
 
-from pdsls._internal.operations import delete_record, update_record
+from pdsx._internal.operations import delete_record, update_record
 
 
 @pytest.fixture

@@ -14,7 +14,7 @@ else:
 if TYPE_CHECKING:
     from atproto import AsyncClient, models
 
-from pdsls._internal.types import RecordValue
+from pdsx._internal.types import RecordValue
 
 
 async def list_records(

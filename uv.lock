@@ -400,7 +400,7 @@ wheels = [
 ]
 
 [[package]]
-name = "pdsls"
+name = "pdsx"
 source = { editable = "." }
 dependencies = [
     { name = "atproto" },

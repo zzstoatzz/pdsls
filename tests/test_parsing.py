@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from pdsls._internal.parsing import parse_key_value_args
+from pdsx._internal.parsing import parse_key_value_args
 
 
 def test_parse_string_values() -> None:
