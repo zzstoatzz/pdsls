@@ -5,6 +5,8 @@ from __future__ import annotations
 import json
 from typing import TYPE_CHECKING
 
+from atproto_client.models.dot_dict import DotDict
+from pydantic import BaseModel
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
@@ -15,6 +17,18 @@ if TYPE_CHECKING:
     from atproto import models
 
 console = Console()
+
+
+def _value_to_dict(value: object) -> dict[str, object]:
+    """convert a record value to a dict, handling pydantic models and DotDict."""
+    if isinstance(value, BaseModel):
+        return value.model_dump(mode="json")
+    if isinstance(value, DotDict):
+        return value.to_dict()
+    if isinstance(value, dict):
+        return dict(value)
+    # fallback for unknown types
+    return {k: v for k, v in value.__dict__.items() if not k.startswith("_")}
 
 
 def display_records(
@@ -40,7 +54,7 @@ def display_records(
         output = []
         for record in records:
             rkey = record.uri.split("/")[-1]
-            value_dict = record.value.model_dump(mode="json") if hasattr(record.value, "model_dump") else dict(record.value)
+            value_dict = _value_to_dict(record.value)
             output.append({
                 "rkey": rkey,
                 "uri": record.uri,
@@ -57,7 +71,7 @@ def display_records(
         print(f"{collection} ({count} {plural})")
         for record in records:
             rkey = record.uri.split("/")[-1]
-            value_dict = record.value.model_dump(mode="json") if hasattr(record.value, "model_dump") else dict(record.value)
+            value_dict = _value_to_dict(record.value)
             print(f"{rkey}: {json.dumps(value_dict, separators=(',', ':'))}")
         return
 
@@ -75,9 +89,7 @@ def display_records(
     # only show simple (non-dict, non-list) fields in table view
     if records:
         first_value = records[0].value
-        value_dict = first_value.model_dump() if hasattr(first_value, "model_dump") else (
-            first_value if isinstance(first_value, dict) else {}
-        )
+        value_dict = _value_to_dict(first_value)
 
         for key, val in value_dict.items():
             if key not in ("$type", "py_type") and not isinstance(val, (dict, list)):
@@ -87,10 +99,7 @@ def display_records(
 
     for record in records:
         rkey = record.uri.split("/")[-1]
-        value = record.value
-        value_dict = value.model_dump() if hasattr(value, "model_dump") else (
-            value if isinstance(value, dict) else {}
-        )
+        value_dict = _value_to_dict(record.value)
 
         row = [rkey]
         for key, val in value_dict.items():
@@ -116,26 +125,10 @@ def display_record(response: models.ComAtprotoRepoGetRecord.Response) -> None:
     table.add_row("uri", response.uri)
     table.add_row("cid", response.cid)
 
-    value = response.value
-    if isinstance(value, dict):
-        for key, val in value.items():
-            if key != "$type":
-                table.add_row(key, str(val))
-    else:
-        # convert pydantic model to dict
-        if hasattr(value, "model_dump"):
-            value_dict = value.model_dump()
-            for key, val in value_dict.items():
-                if key != "$type":
-                    table.add_row(key, str(val))
-        else:
-            for key in dir(value):
-                if (
-                    not key.startswith("_")
-                    and key not in ["py_type", "model_config"]
-                    and not callable(getattr(value, key))
-                ):
-                    table.add_row(key, str(getattr(value, key, "")))
+    value_dict = _value_to_dict(response.value)
+    for key, val in value_dict.items():
+        if key not in ("$type", "py_type"):
+            table.add_row(key, str(val))
 
     console.print(Panel(table, title="[bold]record[/bold]", border_style="dim"))
 
