@@ -55,12 +55,14 @@ def display_records(
         for record in records:
             rkey = record.uri.split("/")[-1]
             value_dict = _value_to_dict(record.value)
-            output.append({
-                "rkey": rkey,
-                "uri": record.uri,
-                "cid": record.cid,
-                **value_dict,
-            })
+            output.append(
+                {
+                    "rkey": rkey,
+                    "uri": record.uri,
+                    "cid": record.cid,
+                    **value_dict,
+                }
+            )
         print(json.dumps(output, indent=2))
         return
 
@@ -92,10 +94,16 @@ def display_records(
         value_dict = _value_to_dict(first_value)
 
         for key, val in value_dict.items():
-            if key not in ("$type", "py_type") and not isinstance(val, (dict, list)):
+            if key not in ("$type", "py_type") and not isinstance(val, dict | list):
                 # special handling for text fields - give them more width
                 width = 50 if key == "text" else 20
-                table.add_column(key, style="white", no_wrap=True, overflow="ellipsis", max_width=width)
+                table.add_column(
+                    key,
+                    style="white",
+                    no_wrap=True,
+                    overflow="ellipsis",
+                    max_width=width,
+                )
 
     for record in records:
         rkey = record.uri.split("/")[-1]
@@ -103,7 +111,7 @@ def display_records(
 
         row = [rkey]
         for key, val in value_dict.items():
-            if key not in ("$type", "py_type") and not isinstance(val, (dict, list)):
+            if key not in ("$type", "py_type") and not isinstance(val, dict | list):
                 cell_val = str(val) if val is not None else ""
                 row.append(cell_val)
 

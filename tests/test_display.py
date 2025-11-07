@@ -26,7 +26,9 @@ class MockRecord:
         self.value = value
 
 
-def test_display_records_with_pydantic_model(capsys: pytest.CaptureFixture[str]) -> None:
+def test_display_records_with_pydantic_model(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
     """test display_records handles pydantic models correctly."""
     value = MockPydanticValue(title="test", text="hello world")
     record = MockRecord(
