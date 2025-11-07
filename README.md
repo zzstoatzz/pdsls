@@ -12,44 +12,29 @@ uvx pdsx --help
 
 ## quick start
 
-set your credentials:
-
 ```bash
-export ATPROTO_HANDLE=your.handle
-export ATPROTO_PASSWORD=your-password
-```
+# read anyone's posts (no auth)
+pdsx -r did:plc:o53crari67ge7bvbv273lxln ls app.bsky.feed.post -o json | jq -r '.[].text'
 
-list posts (compact format by default):
-
-```bash
-pdsx ls app.bsky.feed.post --limit 10
-```
-
-json output for jq:
-
-```bash
-pdsx ls app.bsky.feed.post -o json | jq '.[].text'
-```
-
-table view:
-
-```bash
-pdsx ls app.bsky.feed.post -o table
+# update your bio (with auth)
+export ATPROTO_HANDLE=your.handle ATPROTO_PASSWORD=your-password
+pdsx edit app.bsky.actor.profile/self description='new bio'
 ```
 
 ## features
 
 - crud operations for atproto records (list, get, create, update, delete)
+- optional auth: reads with `--repo` flag don't require authentication
+- shorthand URIs: use `app.bsky.feed.post/abc123` when authenticated
 - multiple output formats: compact (default), json, yaml, table
-- unix-style command aliases: `ls`, `cat`, `rm`, `edit`, `touch`/`add`
-- clean json output for jq/pipe interoperability
-- tty-aware formatting
-- type-safe with strict typing
-- python 3.10+ support
+- unix-style aliases: `ls`, `cat`, `rm`, `edit`, `touch`/`add`
+- jq-friendly json output
+- python 3.10+, type-safe
 
-## usage
+<details>
+<summary>usage examples</summary>
 
-### read operations (no auth required with --repo)
+### read operations (no auth with --repo)
 
 ```bash
 # list records from any repo
@@ -62,111 +47,53 @@ pdsx cat at://did:plc:example/app.bsky.feed.post/123
 ### write operations (auth required)
 
 ```bash
-# update your bio using shorthand URI
+# update using shorthand URI
 pdsx edit app.bsky.actor.profile/self description='new bio'
 
-# delete a post using shorthand URI
+# delete using shorthand URI
 pdsx rm app.bsky.feed.post/abc123
-```
 
-<details>
-<summary>more usage examples</summary>
-
-### create a record
-```bash
+# create a record
 pdsx create app.bsky.feed.like subject='at://...' createdAt='2024-01-01T00:00:00Z'
-
-# using alias
-pdsx touch app.bsky.feed.like subject='at://...' createdAt='2024-01-01T00:00:00Z'
 ```
 
-### full URI format (when not authenticated)
-```bash
-# update with full URI
-pdsx update at://did:plc:example/app.bsky.feed.post/123 text='updated text'
-
-# delete with full URI
-pdsx delete at://did:plc:example/app.bsky.feed.post/123
-```
-
-**note**: when authenticated, you can use shorthand URIs like `app.bsky.feed.post/abc123` instead of full `at://did:plc:.../app.bsky.feed.post/abc123` format.
+**note**: when authenticated, use shorthand URIs (`collection/rkey`) instead of full AT-URIs (`at://did:plc:.../collection/rkey`)
 
 </details>
 
-## output formats
+<details>
+<summary>output formats</summary>
 
 ### compact (default)
-
-one line per record with json:
-
 ```
 app.bsky.feed.post (3 records)
 3m4ryxwq5dt2i: {"created_at":"2025-11-04T07:25:17.061883+00:00","text":"..."}
-3m4ryxvw4l32z: {"created_at":"2025-11-04T07:25:16.201083+00:00","text":"..."}
 ```
 
 ### json
-
-clean json for piping to jq:
-
 ```bash
 pdsx ls app.bsky.feed.post -o json | jq '.[].text'
 ```
 
 ### table
-
-pretty table for terminal viewing:
-
 ```bash
 pdsx ls app.bsky.feed.post -o table
 ```
 
-## examples
-
-<details>
-<summary>click to see real-world examples</summary>
-
-### read anyone's bio
-```bash
-uvx pdsx --repo did:plc:o53crari67ge7bvbv273lxln list app.bsky.actor.profile -o json | \
-  jq -r '.[0].description'
-```
-
-### update your bio
-```bash
-export ATPROTO_HANDLE=your.handle ATPROTO_PASSWORD=your-password
-uvx pdsx edit app.bsky.actor.profile/self description='new bio'
-```
-
-### read anyone's posts
-```bash
-uvx pdsx -r did:plc:o53crari67ge7bvbv273lxln list app.bsky.feed.post --limit 5 -o json | \
-  jq -r '.[] | .text'
-```
-
-**atproto gives you full read access to anyone's public data. auth only required for writes.**
-
 </details>
 
-## development
+<details>
+<summary>development</summary>
 
 ```bash
-# clone repo
 git clone https://github.com/zzstoatzz/pdsx
 cd pdsx
-
-# install with dev dependencies
 uv sync
-
-# run tests
 uv run pytest
-
-# run type checker
 uv run ty check
-
-# run pre-commit hooks
-uv run prek run --all-files
 ```
+
+</details>
 
 ## license
 
