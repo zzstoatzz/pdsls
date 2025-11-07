@@ -59,6 +59,9 @@ testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
+filterwarnings = [
+    "ignore::pydantic._internal._generate_schema.UnsupportedFieldAttributeWarning",
+]
 
 [tool.ruff.lint]
 fixable = ["ALL"]
