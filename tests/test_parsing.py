@@ -39,13 +39,15 @@ def test_parse_float_values() -> None:
 
 def test_parse_mixed_values() -> None:
     """test parsing mixed value types."""
-    result = parse_key_value_args([
-        "name=test",
-        "count=5",
-        "active=true",
-        "value=null",
-        "rate=2.5",
-    ])
+    result = parse_key_value_args(
+        [
+            "name=test",
+            "count=5",
+            "active=true",
+            "value=null",
+            "rate=2.5",
+        ]
+    )
     assert result == {
         "name": "test",
         "count": 5,

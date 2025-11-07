@@ -9,7 +9,9 @@ from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # suppress pydantic warning about Field defaults
-warnings.filterwarnings("ignore", category=UserWarning, module="pydantic._internal._generate_schema")
+warnings.filterwarnings(
+    "ignore", category=UserWarning, module="pydantic._internal._generate_schema"
+)
 
 
 class Settings(BaseSettings):

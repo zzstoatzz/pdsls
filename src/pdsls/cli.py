@@ -122,7 +122,9 @@ async def async_main() -> int:
     get_parser.add_argument("uri", help="record AT-URI")
 
     # create (touch/add aliases)
-    create_parser = subparsers.add_parser("create", aliases=["touch", "add"], help="create record")
+    create_parser = subparsers.add_parser(
+        "create", aliases=["touch", "add"], help="create record"
+    )
     create_parser.add_argument("collection", help="collection name")
     create_parser.add_argument(
         "fields",
@@ -131,14 +133,18 @@ async def async_main() -> int:
     )
 
     # update (edit alias)
-    update_parser = subparsers.add_parser("update", aliases=["edit"], help="update record")
+    update_parser = subparsers.add_parser(
+        "update", aliases=["edit"], help="update record"
+    )
     update_parser.add_argument("uri", help="record AT-URI")
     update_parser.add_argument(
         "fields", nargs="+", help="fields to update as key=value pairs"
     )
 
     # delete (rm alias)
-    delete_parser = subparsers.add_parser("delete", aliases=["rm"], help="delete record")
+    delete_parser = subparsers.add_parser(
+        "delete", aliases=["rm"], help="delete record"
+    )
     delete_parser.add_argument("uri", help="record AT-URI")
 
     args = parser.parse_args()
