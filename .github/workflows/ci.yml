@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 jobs:
-  prek:
+  pre-commit:
     timeout-minutes: 5
     runs-on: ubuntu-latest
 
