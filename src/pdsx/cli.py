@@ -175,13 +175,16 @@ async def async_main() -> int:
         # auth required if: doing a write operation OR doing a read without --repo
         auth_needed = not is_read or not has_repo_target
 
-        await login(
-            client,
-            args.handle or settings.atproto_handle,
-            args.password or settings.atproto_password,
-            silent=True,
-            required=auth_needed,
-        )
+        # only attempt login if auth is actually needed
+        # this prevents switching PDS when reading from other repos
+        if auth_needed:
+            await login(
+                client,
+                args.handle or settings.atproto_handle,
+                args.password or settings.atproto_password,
+                silent=True,
+                required=True,
+            )
 
         if args.command in ("list", "ls"):
             output_fmt = OutputFormat(args.output) if args.output else None
