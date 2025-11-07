@@ -49,28 +49,30 @@ pdsx ls app.bsky.feed.post -o table
 
 ## usage
 
-### list records
+### read operations (no auth required with --repo)
 
 ```bash
-# using full command
-pdsx list app.bsky.feed.post --limit 5
+# list records from any repo
+pdsx -r did:plc:... ls app.bsky.feed.post --limit 5 -o json
 
-# using alias
-pdsx ls app.bsky.feed.post --limit 5 -o json
-```
-
-### get a record
-
-```bash
-# using full command
-pdsx get at://did:plc:example/app.bsky.feed.post/123
-
-# using alias
+# get a specific record
 pdsx cat at://did:plc:example/app.bsky.feed.post/123
 ```
 
-### create a record
+### write operations (auth required)
 
+```bash
+# update your bio using shorthand URI
+pdsx edit app.bsky.actor.profile/self description='new bio'
+
+# delete a post using shorthand URI
+pdsx rm app.bsky.feed.post/abc123
+```
+
+<details>
+<summary>more usage examples</summary>
+
+### create a record
 ```bash
 pdsx create app.bsky.feed.like subject='at://...' createdAt='2024-01-01T00:00:00Z'
 
@@ -78,23 +80,18 @@ pdsx create app.bsky.feed.like subject='at://...' createdAt='2024-01-01T00:00:00
 pdsx touch app.bsky.feed.like subject='at://...' createdAt='2024-01-01T00:00:00Z'
 ```
 
-### update a record
-
+### full URI format (when not authenticated)
 ```bash
+# update with full URI
 pdsx update at://did:plc:example/app.bsky.feed.post/123 text='updated text'
 
-# using alias
-pdsx edit at://did:plc:example/app.bsky.feed.post/123 text='updated text'
-```
-
-### delete a record
-
-```bash
+# delete with full URI
 pdsx delete at://did:plc:example/app.bsky.feed.post/123
-
-# using alias
-pdsx rm at://did:plc:example/app.bsky.feed.post/123
 ```
+
+**note**: when authenticated, you can use shorthand URIs like `app.bsky.feed.post/abc123` instead of full `at://did:plc:.../app.bsky.feed.post/abc123` format.
+
+</details>
 
 ## output formats
 
