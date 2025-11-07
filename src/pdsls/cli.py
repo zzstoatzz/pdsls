@@ -98,6 +98,7 @@ async def async_main() -> int:
 
     # global identity flag - can be handle or DID
     parser.add_argument(
+        "-r",
         "--repo",
         help="handle or DID to operate on (for reads without auth, or to specify target repo)",
     )
