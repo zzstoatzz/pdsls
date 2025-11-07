@@ -159,11 +159,21 @@ async def async_main() -> int:
 
     try:
         client = AsyncClient(base_url=settings.atproto_pds_url)
+
+        # read operations with --repo don't require auth
+        read_commands = ("list", "ls", "get", "cat")
+        requires_auth = (
+            args.command not in read_commands
+            or (args.command in ("list", "ls") and not args.repo)
+            or (args.command in ("get", "cat") and not hasattr(args, "repo"))
+        )
+
         await login(
             client,
             args.handle or settings.atproto_handle,
             args.password or settings.atproto_password,
-            silent=True,  # always silent by default
+            silent=True,
+            required=requires_auth,
         )
 
         if args.command in ("list", "ls"):

@@ -24,7 +24,8 @@ async def login(
     password: str | None = None,
     *,
     silent: bool = False,
-) -> None:
+    required: bool = True,
+) -> bool:
     """authenticate with atproto.
 
     Args:
@@ -32,12 +33,18 @@ async def login(
         handle: user handle
         password: user password
         silent: suppress authentication output
+        required: whether authentication is required
+
+    Returns:
+        True if authenticated, False if skipped (when not required)
     """
     if not handle or not password:
-        console.print(
-            "[red]error:[/red] provide --handle/--password or set ATPROTO_HANDLE/ATPROTO_PASSWORD"
-        )
-        sys.exit(1)
+        if required:
+            console.print(
+                "[red]error:[/red] provide --handle/--password or set ATPROTO_HANDLE/ATPROTO_PASSWORD"
+            )
+            sys.exit(1)
+        return False
 
     if not silent:
         with Progress(
@@ -51,3 +58,5 @@ async def login(
         console.print(f"[dim]✓ authenticated as[/dim] {handle}\n")
     else:
         await client.login(handle, password)
+
+    return True
