@@ -124,6 +124,33 @@ pretty table for terminal viewing:
 pdsls ls app.bsky.feed.post -o table
 ```
 
+## examples
+
+<details>
+<summary>click to see real-world examples</summary>
+
+### read anyone's bio
+```bash
+uvx pdsls --repo did:plc:o53crari67ge7bvbv273lxln list app.bsky.actor.profile -o json | \
+  jq -r '.[0].description'
+```
+
+### update your bio
+```bash
+export ATPROTO_HANDLE=your.handle ATPROTO_PASSWORD=your-password
+uvx pdsls edit app.bsky.actor.profile/self description='new bio'
+```
+
+### read anyone's posts
+```bash
+uvx pdsls -r did:plc:o53crari67ge7bvbv273lxln list app.bsky.feed.post --limit 5 -o json | \
+  jq -r '.[] | .text'
+```
+
+**atproto gives you full read access to anyone's public data. auth only required for writes.**
+
+</details>
+
 ## development
 
 ```bash
@@ -141,7 +168,7 @@ uv run pytest
 uv run ty check
 
 # run pre-commit hooks
-uv run pre-commit run --all-files
+uv run prek run --all-files
 ```
 
 ## license

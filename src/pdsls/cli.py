@@ -96,9 +96,16 @@ async def async_main() -> int:
         version=f"pdsls {__import__('pdsls').__version__}",
     )
 
-    # global auth options only
-    parser.add_argument("--handle", help="atproto handle")
-    parser.add_argument("--password", help="atproto password")
+    # global identity flag - can be handle or DID
+    parser.add_argument(
+        "-r",
+        "--repo",
+        help="handle or DID to operate on (for reads without auth, or to specify target repo)",
+    )
+
+    # auth options (only needed for writes to your own repo)
+    parser.add_argument("--handle", help="atproto handle for authentication")
+    parser.add_argument("--password", help="atproto password for authentication")
     parser.add_argument("--pds", help="pds url (default: https://bsky.social)")
 
     subparsers = parser.add_subparsers(dest="command", help="command")
@@ -108,7 +115,6 @@ async def async_main() -> int:
     list_parser.add_argument(
         "collection", help="collection name (e.g., app.bsky.feed.post)"
     )
-    list_parser.add_argument("--repo", help="repo DID (default: authenticated user)")
     list_parser.add_argument("--limit", type=int, default=50, help="max records")
     list_parser.add_argument(
         "-o",
@@ -159,11 +165,22 @@ async def async_main() -> int:
 
     try:
         client = AsyncClient(base_url=settings.atproto_pds_url)
+
+        # determine if auth is needed
+        # reads with --repo don't need auth, writes always need auth
+        read_commands = ("list", "ls", "get", "cat")
+        is_read = args.command in read_commands
+        has_repo_target = args.repo is not None
+
+        # auth required if: doing a write operation OR doing a read without --repo
+        auth_needed = not is_read or not has_repo_target
+
         await login(
             client,
             args.handle or settings.atproto_handle,
             args.password or settings.atproto_password,
-            silent=True,  # always silent by default
+            silent=True,
+            required=auth_needed,
         )
 
         if args.command in ("list", "ls"):
