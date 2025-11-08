@@ -24,6 +24,8 @@ uvx pdsx edit app.bsky.actor.profile/self description='new bio'
 ## features
 
 - crud operations for atproto records (list, get, create, update, delete)
+- **blob upload**: upload images, videos, and other binary content
+- **cursor pagination**: paginate through large collections
 - optional auth: reads with `--repo` flag don't require authentication
 - shorthand URIs: use `app.bsky.feed.post/abc123` when authenticated
 - multiple output formats: compact (default), json, yaml, table
@@ -42,6 +44,37 @@ pdsx -r did:plc:... ls app.bsky.feed.post --limit 5 -o json
 
 # read someone's bio
 pdsx -r did:plc:o53crari67ge7bvbv273lxln ls app.bsky.actor.profile -o json | jq -r '.[0].description'
+```
+
+### pagination
+
+```bash
+# get first page of posts
+pdsx -r jlowin.dev ls app.bsky.feed.post --limit 10
+
+# output includes cursor if more pages exist:
+# next page cursor: 3lyqmkpiprs2w
+
+# get next page using cursor
+pdsx -r jlowin.dev ls app.bsky.feed.post --limit 10 --cursor 3lyqmkpiprs2w
+```
+
+### blob upload (auth required)
+
+```bash
+# upload an image
+pdsx upload-blob ./photo.jpg
+
+# returns blob reference like:
+# {
+#   "$type": "blob",
+#   "ref": {"$link": "bafkreif..."},
+#   "mimeType": "image/jpeg",
+#   "size": 123456
+# }
+
+# use blob reference in records (e.g., create post with image)
+# copy the blob reference output and use it in your record creation
 ```
 
 ### write operations (auth required)

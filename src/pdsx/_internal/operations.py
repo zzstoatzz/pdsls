@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import sys
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 if sys.version_info >= (3, 11):
@@ -22,7 +23,8 @@ async def list_records(
     collection: str,
     limit: int,
     repo: str | None = None,
-) -> list[models.ComAtprotoRepoListRecords.Record]:
+    cursor: str | None = None,
+) -> models.ComAtprotoRepoListRecords.Response:
     """list records in a collection.
 
     Args:
@@ -30,23 +32,25 @@ async def list_records(
         collection: collection name
         limit: maximum number of records
         repo: optional repo DID (defaults to authenticated user)
+        cursor: optional pagination cursor
 
     Returns:
-        list of records
+        response with records and optional cursor for next page
     """
     target_repo = repo or (client.me.did if client.me else None)
     if not target_repo:
         raise ValueError("no repo specified and not authenticated")
 
-    response = await client.com.atproto.repo.list_records(
-        {
-            "repo": target_repo,
-            "collection": collection,
-            "limit": limit,
-        }
-    )
+    params: dict[str, str | int] = {
+        "repo": target_repo,
+        "collection": collection,
+        "limit": limit,
+    }
 
-    return response.records
+    if cursor:
+        params["cursor"] = cursor
+
+    return await client.com.atproto.repo.list_records(params)
 
 
 async def get_record(
@@ -201,3 +205,30 @@ async def delete_record(
             "rkey": rkey,
         }
     )
+
+
+async def upload_blob(
+    client: AsyncClient,
+    file_path: str | Path,
+) -> models.ComAtprotoRepoUploadBlob.Response:
+    """upload a blob (image, video, etc.).
+
+    Args:
+        client: authenticated atproto client
+        file_path: path to file to upload
+
+    Returns:
+        upload response with blob reference
+    """
+    if client.me is None:
+        raise ValueError("not authenticated")
+
+    file_path = Path(file_path)
+    if not file_path.exists():
+        raise FileNotFoundError(f"file not found: {file_path}")
+
+    # read file bytes
+    data = file_path.read_bytes()
+
+    # upload blob
+    return await client.com.atproto.repo.upload_blob(data)

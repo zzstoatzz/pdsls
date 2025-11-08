@@ -28,6 +28,7 @@ from pdsx._internal.operations import (  # noqa: E402
     get_record,
     list_records,
     update_record,
+    upload_blob,
 )
 from pdsx._internal.output import OutputFormat  # noqa: E402
 from pdsx._internal.parsing import parse_key_value_args  # noqa: E402
@@ -39,15 +40,20 @@ async def cmd_list(
     collection: str,
     limit: int,
     repo: str | None = None,
+    cursor: str | None = None,
     output_format: OutputFormat | None = None,
 ) -> None:
     """list records in a collection."""
-    records = await list_records(client, collection, limit, repo)
+    response = await list_records(client, collection, limit, repo, cursor)
 
     # determine output format - default to compact (most readable for most data)
     fmt = output_format or OutputFormat.COMPACT
 
-    display_records(collection, records, output_format=fmt)
+    display_records(collection, response.records, output_format=fmt)
+
+    # display cursor if there are more pages
+    if response.cursor:
+        console.print(f"\n[dim]next page cursor:[/dim] {response.cursor}")
 
 
 async def cmd_get(client: AsyncClient, uri: str) -> None:
@@ -80,6 +86,27 @@ async def cmd_delete(client: AsyncClient, uri: str) -> None:
     """delete a record."""
     await delete_record(client, uri)
     display_success("deleted", "", "")
+
+
+async def cmd_upload_blob(client: AsyncClient, file_path: str) -> None:
+    """upload a blob (image, video, etc.)."""
+    response = await upload_blob(client, file_path)
+
+    # display blob reference in json format for easy copying
+    import json
+
+    blob_ref = {
+        "$type": "blob",
+        "ref": {"$link": response.blob.ref.link},
+        "mimeType": response.blob.mime_type,
+        "size": response.blob.size,
+    }
+    console.print("[green]✓[/green] blob uploaded successfully")
+    console.print("\n[bold]blob reference:[/bold]")
+    console.print(json.dumps(blob_ref, indent=2))
+    console.print(
+        "\n[dim]use this blob reference in records (e.g., for post embeds)[/dim]"
+    )
 
 
 async def async_main() -> int:
@@ -118,6 +145,10 @@ async def async_main() -> int:
     )
     list_parser.add_argument("--limit", type=int, default=50, help="max records")
     list_parser.add_argument(
+        "--cursor",
+        help="pagination cursor from previous response",
+    )
+    list_parser.add_argument(
         "-o",
         "--output",
         choices=["json", "yaml", "table", "compact"],
@@ -153,6 +184,12 @@ async def async_main() -> int:
         "delete", aliases=["rm"], help="delete record"
     )
     delete_parser.add_argument("uri", help="record AT-URI")
+
+    # upload-blob
+    upload_blob_parser = subparsers.add_parser(
+        "upload-blob", help="upload a blob (image, video, etc.)"
+    )
+    upload_blob_parser.add_argument("file_path", help="path to file to upload")
 
     args = parser.parse_args()
 
@@ -194,6 +231,7 @@ async def async_main() -> int:
                 args.collection,
                 args.limit,
                 args.repo,
+                args.cursor,
                 output_format=output_fmt,
             )
 
@@ -210,6 +248,9 @@ async def async_main() -> int:
 
         elif args.command in ("delete", "rm"):
             await cmd_delete(client, args.uri)
+
+        elif args.command == "upload-blob":
+            await cmd_upload_blob(client, args.file_path)
 
         return 0
 
