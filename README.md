@@ -2,6 +2,8 @@
 
 general-purpose cli for atproto record operations
 
+📚 **[documentation](https://pdsx.zzstoatzz.io)**
+
 ## installation
 
 ```bash
