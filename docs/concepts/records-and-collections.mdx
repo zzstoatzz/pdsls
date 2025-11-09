@@ -245,6 +245,49 @@ pdsx create app.bsky.feed.post text='hi'
 
 **records are portable**: tied to repository, not pds
 
+## pagination and cursors
+
+collections can contain thousands of records. the PDS returns them in pages using cursor-based pagination:
+
+**cursors are opaque tokens**:
+- NOT timestamps or offsets
+- NOT page numbers
+- opaque strings that encode pagination state
+- implementation details are PDS-specific
+
+**how cursors work in pdsx**:
+```bash
+# first page
+pdsx ls app.bsky.feed.post --limit 10
+# output shows: next page cursor: 3lyqmkpiprs2w
+
+# next page
+pdsx ls app.bsky.feed.post --limit 10 --cursor 3lyqmkpiprs2w
+```
+
+**cursor display**:
+- for json/yaml output: cursor appears on stderr (doesn't corrupt structured data)
+- for compact/table output: cursor appears on stdout after results
+
+**cursors can expire**: typically after minutes. if a cursor stops working, start over from the beginning.
+
+## credentials and security
+
+<Warning>
+**NEVER commit credentials to version control**, even in private repos. credentials should live in user-specific config only.
+</Warning>
+
+where to store credentials:
+- environment variables (`ATPROTO_HANDLE`, `ATPROTO_PASSWORD`)
+- shell rc files with `export`
+- password managers or keychains
+- `.env` files (add to `.gitignore`!)
+
+obtaining app passwords:
+- go to Bluesky settings → App Passwords
+- format: `xxxx-xxxx-xxxx-xxxx` (not your account password)
+- scoped permissions, revocable
+
 ## limitations
 
 ### no client-side lexicon validation

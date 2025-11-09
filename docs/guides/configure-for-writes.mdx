@@ -1,0 +1,104 @@
+---
+title: "Configure pdsx for Writes"
+description: "Set up authentication to create, update, and delete records"
+---
+
+# configure pdsx for writes
+
+reading public records with `-r` doesn't require authentication, but any write operations (create, update, delete) need credentials.
+
+## install pdsx
+
+```bash
+# one-time use
+uvx pdsx --help
+
+# add to project
+uv add pdsx
+```
+
+## obtain an app password
+
+<Warning>
+**Use an app password, not your account password**. App passwords have scoped permissions and can be revoked.
+</Warning>
+
+1. go to Bluesky settings → App Passwords
+2. create new app password
+3. copy the generated password (format: `xxxx-xxxx-xxxx-xxxx`)
+4. store it securely (you won't see it again)
+
+## configure credentials
+
+### option 1: environment variables (recommended)
+
+create a `.env` file in your project:
+
+```bash
+ATPROTO_HANDLE=your.handle.bsky.social
+ATPROTO_PASSWORD=xxxx-xxxx-xxxx-xxxx
+```
+
+<Warning>
+**Add `.env` to `.gitignore`** to prevent committing credentials to version control.
+</Warning>
+
+### option 2: shell rc file
+
+add to `~/.zshrc` or `~/.bashrc`:
+
+```bash
+export ATPROTO_HANDLE=your.handle.bsky.social
+export ATPROTO_PASSWORD=xxxx-xxxx-xxxx-xxxx
+```
+
+### option 3: command-line flags
+
+```bash
+pdsx --handle your.handle --password xxxx-xxxx-xxxx-xxxx create ...
+```
+
+not recommended for regular use (password appears in shell history).
+
+## verify authentication
+
+test that auth works by listing your own profile:
+
+```bash
+pdsx ls app.bsky.actor.profile
+```
+
+you should see your profile record with `description`, `displayName`, etc.
+
+## use a test account
+
+<Tip>
+When learning pdsx, use a test account to avoid accidentally modifying your main profile.
+</Tip>
+
+create a throwaway Bluesky account for experimentation:
+1. sign up at bsky.app with a test email
+2. generate app password
+3. use those credentials in pdsx
+
+## troubleshooting
+
+**error: "provide --handle/--password or set ATPROTO_HANDLE/ATPROTO_PASSWORD"**
+
+authentication is required for this operation. set credentials via env vars or flags.
+
+**authentication succeeds but operations fail**
+
+verify you're using an app password (format `xxxx-xxxx-xxxx-xxxx`), not your account password.
+
+**"invalid handle or password"**
+
+- check handle format: `username.bsky.social` (not `@username`)
+- verify app password is copied correctly (no extra spaces)
+- ensure app password hasn't been revoked in Bluesky settings
+
+## what's next
+
+- [read any repository](/guides/read-repositories) - explore public data
+- [create, update, delete safely](/guides/crud-safety) - write operations workflow
+- [repositories concept](/concepts/repositories) - understand the auth model

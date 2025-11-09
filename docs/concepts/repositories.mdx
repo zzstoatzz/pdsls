@@ -233,6 +233,30 @@ knowing the repository model helps you understand:
 
 **why pdsx has the flags it does**: `-r` specifies which repository, `--pds` specifies which server
 
+## from concept to command
+
+the repository model maps directly to pdsx commands:
+
+**reading from any repository** (no auth needed):
+```bash
+# using handle
+pdsx -r jlowin.dev ls app.bsky.feed.post
+
+# using DID (more durable)
+pdsx -r did:plc:44ybard66vv44zksje25o7dz ls app.bsky.feed.post
+```
+pdsx resolves to the PDS hosting that repository and fetches public records
+
+**writing to your repository** (auth required):
+```bash
+export ATPROTO_HANDLE=your.handle
+export ATPROTO_PASSWORD=your-app-password
+pdsx create app.bsky.feed.post text='hello world'
+```
+pdsx authenticates with your PDS, creates a session with your DID, and writes to your repository
+
+**why the `-r` flag exists**: it specifies which repository to read from. without it, pdsx uses your authenticated repository (from `client.me.did`)
+
 ## further reading
 
 - [atproto repository spec](https://atproto.com/specs/repository)

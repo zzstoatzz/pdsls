@@ -112,6 +112,10 @@ uses authenticated session:
 
 ## shorthand uris in pdsx
 
+<Note>
+**IMPORTANT**: Shorthand URIs (`collection/rkey`) only work when you have an active authenticated session. Without authentication, you must use full AT-URIs (`at://authority/collection/rkey`). If you see an "invalid URI format" error, this is likely why.
+</Note>
+
 when authenticated, pdsx supports shorthand:
 
 ### full uri
@@ -307,6 +311,29 @@ at://user.handle/collection/rkey
 ```
 
 **pds is discovered automatically**: unless overridden with --pds
+
+## from concept to command
+
+these addressing concepts translate directly to pdsx usage:
+
+**reading with handle**:
+```bash
+pdsx -r jlowin.dev ls app.bsky.feed.post
+```
+pdsx resolves handle → DID → PDS → fetches records
+
+**reading with DID** (more durable):
+```bash
+pdsx -r did:plc:44ybard66vv44zksje25o7dz ls app.bsky.feed.post
+```
+pdsx finds PDS from DID document → fetches records
+
+**shorthand (authenticated only)**:
+```bash
+pdsx get app.bsky.feed.post/3jwdwj2ctlk26
+pdsx edit app.bsky.actor.profile/self description='new bio'
+```
+pdsx uses `client.me.did` from session to construct full URI
 
 ## further reading
 

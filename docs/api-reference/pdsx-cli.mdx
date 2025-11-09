@@ -1,0 +1,91 @@
+---
+title: cli
+sidebarTitle: cli
+---
+
+# `pdsx.cli`
+
+
+general-purpose cli for atproto record operations.
+
+## Functions
+
+### `cmd_list` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/cli.py#L38" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+cmd_list(client: AsyncClient, collection: str, limit: int, repo: str | None = None, cursor: str | None = None, output_format: OutputFormat | None = None) -> None
+```
+
+
+list records in a collection.
+
+
+### `cmd_get` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/cli.py#L65" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+cmd_get(client: AsyncClient, uri: str) -> None
+```
+
+
+get a specific record.
+
+
+### `cmd_create` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/cli.py#L71" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+cmd_create(client: AsyncClient, collection: str, record: dict[str, RecordValue]) -> None
+```
+
+
+create a new record.
+
+
+### `cmd_update` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/cli.py#L81" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+cmd_update(client: AsyncClient, uri: str, updates: dict[str, RecordValue]) -> None
+```
+
+
+update an existing record.
+
+
+### `cmd_delete` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/cli.py#L91" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+cmd_delete(client: AsyncClient, uri: str) -> None
+```
+
+
+delete a record.
+
+
+### `cmd_upload_blob` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/cli.py#L97" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+cmd_upload_blob(client: AsyncClient, file_path: str) -> None
+```
+
+
+upload a blob (image, video, etc.).
+
+
+### `async_main` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/cli.py#L118" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+async_main() -> int
+```
+
+
+main entry point.
+
+
+### `main` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/cli.py#L272" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+main() -> NoReturn
+```
+
+
+synchronous entry point.
+
