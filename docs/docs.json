@@ -1,0 +1,65 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "name": "pdsx",
+  "logo": {
+    "dark": "/assets/logo.png",
+    "light": "/assets/logo.png"
+  },
+  "favicon": "/assets/favicon.png",
+  "colors": {
+    "dark": "#0D9373",
+    "light": "#07C983",
+    "primary": "#0D9373"
+  },
+  "navbar": {
+    "primary": {
+      "href": "https://github.com/zzstoatzz/pdsx",
+      "type": "github"
+    }
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/zzstoatzz/pdsx"
+    }
+  },
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/configure-for-writes",
+              "guides/read-repositories",
+              "guides/uri-troubleshooting",
+              "guides/crud-safety",
+              "guides/blob-upload"
+            ]
+          },
+          {
+            "group": "Concepts",
+            "pages": [
+              "concepts/repositories",
+              "concepts/records-and-collections",
+              "concepts/addressing"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "pages": [
+          "api-reference/pdsx-cli"
+        ]
+      }
+    ]
+  },
+  "theme": "mint"
+}
