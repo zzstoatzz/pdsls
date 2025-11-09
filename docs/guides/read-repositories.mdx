@@ -28,89 +28,47 @@ pdsx -r did:plc:44ybard66vv44zksje25o7dz ls app.bsky.feed.post --limit 5
 
 DIDs are permanent identifiers - they don't change if user updates their handle.
 
-## when to use handles vs DIDs
+## handles vs DIDs
 
-**use handles for**:
-- interactive exploration
-- user-facing displays
-- short-term references
-
-**use DIDs for**:
-- automation and scripts
-- long-term storage
-- reliable references
-
-<Tip>
-Handles can change or be reassigned. If you need a durable reference, use DIDs.
-</Tip>
+handles can change or be reassigned. DIDs are permanent. use DIDs for automation or long-term references.
 
 ## pagination
-
-collections can contain thousands of records. pdsx paginates results:
 
 ```bash
 # first page
 pdsx -r jlowin.dev ls app.bsky.feed.post --limit 10
-
-# output includes cursor (on stderr for json/yaml):
 # next page cursor: 3lyqmkpiprs2w
 
 # next page
 pdsx -r jlowin.dev ls app.bsky.feed.post --limit 10 --cursor 3lyqmkpiprs2w
 ```
 
-**important**: cursors are opaque tokens, not page numbers or timestamps. they can expire after minutes.
+cursors are opaque tokens. for json/yaml output, they go to stderr.
 
 ## output formats
 
-### json (for jq pipelines)
-
 ```bash
+# json (for jq pipelines)
 pdsx -r jlowin.dev ls app.bsky.feed.post -o json | jq -r '.[].text'
-```
 
-cursor goes to stderr, so json on stdout is valid for piping.
-
-### yaml
-
-```bash
+# yaml
 pdsx -r jlowin.dev ls app.bsky.actor.profile -o yaml
-```
 
-### table (human-readable)
-
-```bash
+# table
 pdsx -r jlowin.dev ls app.bsky.feed.post -o table --limit 5
-```
 
-### compact (default)
-
-```bash
+# compact (default)
 pdsx -r jlowin.dev ls app.bsky.feed.post
 ```
 
-shows key info without table formatting.
-
-## practical examples
-
-### read someone's bio
+## examples
 
 ```bash
+# read someone's bio
 pdsx -r jlowin.dev ls app.bsky.actor.profile -o json | jq -r '.[0].description'
-```
 
-### get recent posts as json
-
-```bash
+# get recent posts
 pdsx -r did:plc:o53crari67ge7bvbv273lxln ls app.bsky.feed.post --limit 3 -o json
-```
-
-### inspect pagination cursors
-
-for json/yaml formats, cursors appear on stderr:
-
-```bash
-pdsx -r jlowin.dev ls app.bsky.feed.post -o json 2>&1 | grep cursor
 ```
 
 ## common collections
@@ -124,23 +82,6 @@ pdsx -r jlowin.dev ls app.bsky.feed.post -o json 2>&1 | grep cursor
 | `app.bsky.feed.repost` | reposts |
 | `app.bsky.graph.list` | lists |
 
-## troubleshooting
-
-**handle resolution fails**
-
-- check DNS: `dig TXT _atproto.handle`
-- try HTTPS: `curl https://handle/.well-known/atproto-did`
-- fall back to DID if handle resolution is broken
-
-**cursor expired**
-
-cursors typically expire after minutes. restart from the beginning without `--cursor`.
-
-**empty results**
-
-- verify collection exists: `app.bsky.feed.post` not just `post`
-- check if repository is public
-- try with DID instead of handle
 
 ## what's next
 

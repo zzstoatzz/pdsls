@@ -3,9 +3,7 @@ title: "AT-URI vs Shorthand"
 description: "Understand URI formats and fix 'invalid URI format' errors"
 ---
 
-# at-uri vs shorthand troubleshooting
-
-the most common pdsx error is "invalid URI format" when using shorthand URIs without authentication.
+# at-uri vs shorthand
 
 ## the error
 
@@ -14,35 +12,17 @@ $ pdsx get app.bsky.feed.post/3m52prkzaaq2v
 error: invalid URI format
 ```
 
-**why this fails**: shorthand URIs (`collection/rkey`) only work when authenticated. pdsx needs your DID from the session to construct the full URI.
+shorthand URIs (`collection/rkey`) only work when authenticated. pdsx needs your DID from the session.
 
-## the fix
-
-### option 1: authenticate first
+## fix: authenticate or use full URI
 
 ```bash
-export ATPROTO_HANDLE=your.handle
-export ATPROTO_PASSWORD=your-app-password
-
-# now shorthand works
+# option 1: authenticate
+export ATPROTO_HANDLE=your.handle ATPROTO_PASSWORD=your-app-password
 pdsx get app.bsky.feed.post/3m52prkzaaq2v
-```
 
-### option 2: use full AT-URI
-
-```bash
+# option 2: use full AT-URI
 pdsx get at://did:plc:o53crari67ge7bvbv273lxln/app.bsky.feed.post/3m52pstmbzk2d
-```
-
-full URIs work with or without authentication.
-
-## decision tree
-
-```
-need to read/write a record?
-├─ are you authenticated?
-│  ├─ yes → use shorthand: collection/rkey
-│  └─ no  → use full URI: at://authority/collection/rkey
 ```
 
 ## AT-URI format
@@ -61,119 +41,32 @@ at://did:plc:44ybard66vv44zksje25o7dz/app.bsky.feed.post/3jwdwj2ctlk26
 scheme      (DID or handle)
 ```
 
-## constructing full AT-URIs
-
-### from ls output
+## constructing AT-URIs
 
 ```bash
+# get URI from ls output
 pdsx -r jlowin.dev ls app.bsky.feed.post -o json | jq -r '.[0].uri'
-# returns: at://did:plc:44ybard66vv44zksje25o7dz/app.bsky.feed.post/3jwdwj2ctlk26
 ```
 
-use the `uri` field from any record.
-
-### manually
-
-1. get the DID:
-   ```bash
-   pdsx -r handle ls app.bsky.actor.profile -o json | jq -r '.[0]'
-   ```
-   look for DID in output
-
-2. construct URI:
-   ```
-   at://[DID]/[COLLECTION]/[RKEY]
-   ```
-
-## shorthand URIs (authenticated only)
-
-when authenticated, pdsx accepts shorthand:
+## shorthand examples
 
 ```bash
-# these only work when authenticated:
+# authenticated only:
 pdsx get app.bsky.feed.post/3jwdwj2ctlk26
 pdsx edit app.bsky.actor.profile/self description='new bio'
 pdsx rm app.bsky.feed.post/3jwdwj2ctlk26
 ```
 
-pdsx automatically:
-1. uses your DID from `client.me.did`
-2. constructs full URI: `at://your-did/collection/rkey`
-3. executes operation
+## DID vs handle in URIs
 
-## when shorthand works
-
-**works**:
-- `pdsx create ...` (always authenticated)
-- `pdsx edit collection/rkey ...` (if authenticated)
-- `pdsx rm collection/rkey` (if authenticated)
-- `pdsx get collection/rkey` (if authenticated)
-
-**doesn't work**:
-- `pdsx -r other-user get collection/rkey` (reading someone else's repo)
-- any operation without `ATPROTO_HANDLE`/`ATPROTO_PASSWORD` set
-
-## authority: DID vs handle
-
-### using DIDs (recommended for durability)
+DIDs are permanent. handles can change or be reassigned. use DIDs for durable references.
 
 ```bash
+# DID (permanent)
 at://did:plc:44ybard66vv44zksje25o7dz/app.bsky.feed.post/3jwdwj2ctlk26
-```
 
-**advantages**:
-- permanent (never changes)
-- works even if user changes handle
-- reliable for automation
-
-### using handles (human-readable)
-
-```bash
+# handle (fragile)
 at://jlowin.dev/app.bsky.feed.post/3jwdwj2ctlk26
-```
-
-**advantages**:
-- easier to read/type
-- user-friendly
-
-**risks**:
-- breaks if user changes handle
-- handle can be reassigned to different user
-
-<Warning>
-For any reference you want to keep long-term, use DIDs as the authority, not handles.
-</Warning>
-
-## common mistakes
-
-### missing at:// prefix
-
-```bash
-# wrong
-pdsx get did:plc:abc123/app.bsky.feed.post/3jwdwj2ctlk26
-
-# correct
-pdsx get at://did:plc:abc123/app.bsky.feed.post/3jwdwj2ctlk26
-```
-
-### using shorthand for other repos
-
-```bash
-# wrong - shorthand only works for your own repo
-pdsx -r other-user get app.bsky.feed.post/3jwdwj2ctlk26
-
-# correct - use full URI
-pdsx get at://did:plc:other-user/app.bsky.feed.post/3jwdwj2ctlk26
-```
-
-### wrong collection format
-
-```bash
-# wrong - not the full NSID
-pdsx get at://did:plc:abc123/post/3jwdwj2ctlk26
-
-# correct
-pdsx get at://did:plc:abc123/app.bsky.feed.post/3jwdwj2ctlk26
 ```
 
 ## what's next

@@ -3,192 +3,58 @@ title: "Create, Update, Delete Safely"
 description: "CRUD operations workflow with safety best practices"
 ---
 
-# create, update, delete safely
+# create, update, delete
 
-write operations permanently modify your repository. follow these practices to avoid mistakes.
-
-## prerequisites
-
-<Warning>
-Write operations require authentication. See [configure for writes](/guides/configure-for-writes) first.
-</Warning>
+write operations require authentication. use a test account when learning.
 
 ```bash
 export ATPROTO_HANDLE=your.handle
 export ATPROTO_PASSWORD=your-app-password
 ```
 
-## use a test account
-
-<Tip>
-**Always practice on a test account first.** Create a throwaway Bluesky account for learning pdsx.
-</Tip>
-
-reasons:
-- avoid accidentally modifying your main profile
-- experiment freely without consequences
-- delete test records without cluttering your main repo
-
-## create records
-
-### basic creation
+## create
 
 ```bash
 pdsx create app.bsky.feed.post text='hello world' langs='["en"]'
 ```
 
-pdsx automatically adds:
-- `$type`: inferred from collection (`app.bsky.feed.post`)
-- `createdAt`: current timestamp in ISO 8601 format
+pdsx adds `$type` and `createdAt` automatically. validation happens server-side - check [lexicon docs](https://github.com/bluesky-social/atproto/tree/main/lexicons/app/bsky) for required fields.
 
-### verify creation
+## update
 
 ```bash
-# list recent records
-pdsx ls app.bsky.feed.post --limit 1 -o json | jq
-```
-
-look for your new record in the output.
-
-### what you need to know
-
-**pdsx doesn't validate lexicons**: field validation happens server-side. if you miss required fields or use wrong types, the PDS will reject it with a 400 error.
-
-**error messages come from PDS**: read them carefully - they tell you what's wrong.
-
-**consult lexicon docs**: check [Bluesky lexicons](https://github.com/bluesky-social/atproto/tree/main/lexicons/app/bsky) for required fields.
-
-## update records
-
-### get the record key
-
-```bash
-# list records to find the one you want to update
+# get record key from ls output
 pdsx ls app.bsky.feed.post -o json | jq -r '.[] | "\(.uri) - \(.value.text)"'
-```
 
-copy the rkey from the URI (last part after final `/`).
-
-### update with shorthand
-
-```bash
+# update
 pdsx edit app.bsky.feed.post/RKEY text='updated text'
+
+# update profile
+pdsx edit app.bsky.actor.profile/self description='new bio'
 ```
 
-pdsx:
-1. fetches current record
-2. merges your changes
-3. submits updated record to PDS
-
-### update your profile
-
-the profile collection uses fixed rkey `self`:
-
-```bash
-pdsx edit app.bsky.actor.profile/self description='new bio text'
-```
-
-## delete records
-
-### delete with shorthand
+## delete
 
 ```bash
 pdsx rm app.bsky.feed.post/RKEY
 ```
 
-### delete is permanent
+delete is permanent - no undo.
 
-<Warning>
-There's no undo. The record is removed from the current repository state.
-</Warning>
-
-historical versions exist in commit history, but pdsx doesn't provide tools to recover them.
-
-## safe workflow
-
-1. **list** to see current state:
-   ```bash
-   pdsx ls app.bsky.feed.post --limit 5 -o json
-   ```
-
-2. **create** the record:
-   ```bash
-   pdsx create app.bsky.feed.post text='test post'
-   ```
-
-3. **verify** it exists:
-   ```bash
-   pdsx ls app.bsky.feed.post --limit 1 -o json | jq -r '.[0].value.text'
-   ```
-
-4. **edit** if needed:
-   ```bash
-   pdsx edit app.bsky.feed.post/RKEY text='updated'
-   ```
-
-5. **verify** the update:
-   ```bash
-   pdsx get app.bsky.feed.post/RKEY -o json | jq -r '.value.text'
-   ```
-
-6. **delete** when done:
-   ```bash
-   pdsx rm app.bsky.feed.post/RKEY
-   ```
-
-## common errors
-
-### "not authenticated"
-
-you're trying a write operation without credentials set.
-
-**fix**: set `ATPROTO_HANDLE` and `ATPROTO_PASSWORD`.
-
-### "invalid URI format"
-
-you're using shorthand without authentication.
-
-**fix**: authenticate first, or use full AT-URI. see [URI troubleshooting](/guides/uri-troubleshooting).
-
-### 400 error from PDS
-
-validation failed - missing required field or wrong type.
-
-**fix**: check [lexicon docs](https://github.com/bluesky-social/atproto/tree/main/lexicons) for the collection you're using.
-
-examples:
-- `app.bsky.feed.post` requires `text` and `createdAt`
-- `app.bsky.feed.like` requires `subject` (with URI and CID)
-
-### "shorthand URI requires authentication"
-
-trying to use shorthand format without active session.
-
-**fix**: set credentials or use full AT-URI.
-
-## writing to your own repository only
-
-<Note>
-Write operations **always** target your authenticated repository. You cannot write to other users' repositories.
-</Note>
-
-pdsx uses `client.me.did` from your session to determine which repository to write to.
-
-## draft records in json
-
-for complex records, draft in a file first:
+## workflow
 
 ```bash
-cat > post.json <<EOF
-{
-  "text": "hello world",
-  "langs": ["en"]
-}
-EOF
+# create
+pdsx create app.bsky.feed.post text='test'
 
-# then create (note: pdsx CLI doesn't support file input yet)
-# you'll need to pass fields as arguments
-pdsx create app.bsky.feed.post text='hello world' langs='["en"]'
+# verify
+pdsx ls app.bsky.feed.post --limit 1 -o json | jq -r '.[0].value.text'
+
+# edit
+pdsx edit app.bsky.feed.post/RKEY text='updated'
+
+# delete
+pdsx rm app.bsky.feed.post/RKEY
 ```
 
 ## what's next
