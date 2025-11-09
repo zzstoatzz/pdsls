@@ -1,0 +1,273 @@
+---
+title: "Records and Collections"
+description: "the fundamental data model pdsx operates on"
+---
+
+# records and collections
+
+## what is a record?
+
+a **record** is the atomic unit of data in atproto - a json object with a type and content.
+
+examples:
+- a post is a record
+- a like is a record
+- a follow is a record
+- your profile is a record
+
+every record has:
+- **$type**: lexicon schema it follows
+- **data**: the actual content
+- **metadata**: creation time, creator
+
+## record structure
+
+```json
+{
+  "$type": "app.bsky.feed.post",
+  "text": "hello atproto!",
+  "createdAt": "2025-11-08T00:00:00.000Z",
+  "langs": ["en"]
+}
+```
+
+the `$type` field identifies which lexicon schema this record follows.
+
+## lexicon schemas
+
+lexicons are schema definitions that specify:
+- what fields are required
+- what types those fields have
+- validation constraints
+- relationships to other records
+
+example lexicon (simplified):
+```
+app.bsky.feed.post {
+  text: string (required, max 300 chars)
+  createdAt: datetime (required)
+  langs: array<string> (optional)
+  facets: array<facet> (optional)
+  ...
+}
+```
+
+**pdsx relies on lexicons** being defined - it doesn't create them or validate against them (yet, see issue #18).
+
+## what is a collection?
+
+a **collection** groups all records of the same type together in a repository.
+
+```
+repository/
+  app.bsky.feed.post/           ← collection
+    3jwdwj2ctlk26              ← record
+    3k2y5tqw7ml2r              ← record
+    3lyqmkpiprs2w              ← record
+  app.bsky.actor.profile/       ← collection
+    self                        ← record
+  app.bsky.graph.follow/        ← collection
+    3m4ryxwq5dt2i              ← record
+```
+
+collection names are **nsids** (namespaced identifiers):
+- reverse-dns style: `app.bsky.feed.post`
+- scoped by authority: `app.bsky.*` is bluesky's namespace
+- globally unique
+
+## common collections
+
+| collection | contains |
+|-----------|----------|
+| `app.bsky.feed.post` | posts/skeets |
+| `app.bsky.feed.like` | likes |
+| `app.bsky.graph.follow` | follows |
+| `app.bsky.actor.profile` | user profile |
+| `app.bsky.feed.repost` | reposts |
+| `app.bsky.graph.list` | lists |
+| `app.bsky.graph.block` | blocks |
+
+each has a lexicon defining its structure.
+
+## record keys (rkeys)
+
+within a collection, each record has a unique **rkey**:
+
+```
+app.bsky.feed.post/3jwdwj2ctlk26
+                   └─────────────┘
+                        rkey
+```
+
+### tid format (most common)
+
+most rkeys use **tid** (timestamp identifier):
+- example: `3jwdwj2ctlk26`
+- base32 encoded timestamp + random bits
+- sortable chronologically
+- unique across all records
+
+why tids?
+- auto-generated on creation
+- chronological ordering within collection
+- collision-resistant
+
+### self format (profiles)
+
+some collections use fixed rkeys:
+```
+app.bsky.actor.profile/self
+```
+
+each repository has exactly one profile record at key `self`.
+
+### custom rkeys
+
+some lexicons allow custom rkeys (rare):
+- must match: `[a-zA-Z0-9_\-\.]+`
+- max 512 characters
+- client chooses on creation
+
+## how pdsx interacts with records
+
+### creating records
+
+```bash
+pdsx create app.bsky.feed.post text='hello world'
+```
+
+pdsx:
+1. constructs record json
+2. auto-adds `$type` and `createdAt`
+3. submits to pds
+4. pds validates against lexicon
+5. pds assigns tid
+6. pds stores in repository mst
+7. returns uri + cid
+
+### reading records
+
+```bash
+pdsx ls app.bsky.feed.post
+```
+
+pdsx:
+1. queries pds for collection
+2. pds traverses mst at that path
+3. returns records in chronological order (tid-sorted)
+4. pdsx displays to user
+
+### updating records
+
+```bash
+pdsx edit app.bsky.feed.post/3jwdwj2ctlk26 text='updated'
+```
+
+pdsx:
+1. fetches current record
+2. merges your changes
+3. submits updated record
+4. pds validates
+5. pds creates new commit
+6. old version preserved in history
+
+### deleting records
+
+```bash
+pdsx rm app.bsky.feed.post/3jwdwj2ctlk26
+```
+
+pdsx:
+1. instructs pds to delete
+2. pds removes from mst
+3. pds creates commit reflecting deletion
+4. record gone from current state
+
+## record references
+
+records can reference other records:
+
+```json
+{
+  "$type": "app.bsky.feed.like",
+  "subject": {
+    "uri": "at://did:plc:other-user/app.bsky.feed.post/abc123",
+    "cid": "bafyrei..."
+  },
+  "createdAt": "2025-11-08T00:00:00.000Z"
+}
+```
+
+the `subject` field is a **strong reference**:
+- uri: identifies which record
+- cid: content hash for verification
+
+strong refs let you:
+- detect if referenced record changed
+- verify integrity
+- handle deleted references
+
+## collection organization benefits
+
+grouping by collection enables:
+
+**efficient enumeration**:
+```bash
+# fast - all posts adjacent in mst
+pdsx ls app.bsky.feed.post
+```
+
+**type safety**: all records in collection follow same schema
+
+**access control**: can set permissions per collection
+
+**export/backup**: can export entire collection at once
+
+## why understanding records/collections matters for pdsx
+
+**collection names are required**: you must specify collection in most commands
+```bash
+pdsx ls app.bsky.feed.post        # not just "posts"
+```
+
+**rkeys identify specific records**: for get/update/delete operations
+```bash
+pdsx get app.bsky.feed.post/3jwdwj2ctlk26
+```
+
+**$type is auto-added**: pdsx infers from collection name
+```bash
+pdsx create app.bsky.feed.post text='hi'
+# pdsx adds: "$type": "app.bsky.feed.post"
+```
+
+**validation is server-side**: pdsx doesn't validate against lexicons (see issue #18)
+
+**records are portable**: tied to repository, not pds
+
+## limitations
+
+### no client-side lexicon validation
+
+pdsx currently doesn't validate records against lexicon schemas. this means:
+- invalid records fail server-side
+- error messages come from pds, not pdsx
+- you might waste round-trips on obvious errors
+
+tracked in issue #18.
+
+### no schema discovery
+
+pdsx doesn't know which collections exist or what fields they have. you need to know:
+- collection names (nsids)
+- required fields
+- field types
+
+consult atproto/bluesky documentation for lexicon details.
+
+## further reading
+
+- [lexicon specification](https://atproto.com/specs/lexicon)
+- [nsid format](https://atproto.com/specs/nsid)
+- [tid format](https://atproto.com/specs/record-key)
+- [common bluesky lexicons](https://github.com/bluesky-social/atproto/tree/main/lexicons/app/bsky)
