@@ -119,6 +119,23 @@ async def async_main() -> int:
     """main entry point."""
     parser = argparse.ArgumentParser(
         description="atproto record operations",
+        epilog="""
+examples:
+  # read anyone's posts (no auth needed)
+  pdsx -r zzstoatzz.io ls app.bsky.feed.post
+
+  # read with DID (more durable than handle)
+  pdsx -r did:plc:abc123 ls app.bsky.feed.post
+
+  # list your own records (requires auth)
+  pdsx --handle you.bsky.social --password xxxx-xxxx ls app.bsky.feed.post
+
+  # create a record (requires auth)
+  pdsx --handle you.bsky.social create app.bsky.feed.post text='hello'
+
+note: -r flag goes BEFORE the command (ls, get, etc.)
+      auth flags (--handle, --password) also go BEFORE the command
+        """,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
@@ -134,13 +151,23 @@ async def async_main() -> int:
     parser.add_argument(
         "-r",
         "--repo",
-        help="handle or DID to operate on (for reads without auth, or to specify target repo)",
+        metavar="REPO",
+        help="read from another repo (handle or DID) - no auth needed for public data",
     )
 
     # auth options (only needed for writes to your own repo)
-    parser.add_argument("--handle", help="atproto handle for authentication")
-    parser.add_argument("--password", help="atproto password for authentication")
-    parser.add_argument("--pds", help="pds url (default: https://bsky.social)")
+    parser.add_argument(
+        "--handle",
+        help="your atproto handle for authentication (required for writes)",
+    )
+    parser.add_argument(
+        "--password",
+        help="your atproto app password (get from Bluesky settings)",
+    )
+    parser.add_argument(
+        "--pds",
+        help="custom PDS URL (default: https://bsky.social)",
+    )
 
     subparsers = parser.add_subparsers(dest="command", help="command")
 
