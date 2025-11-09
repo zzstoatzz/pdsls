@@ -1,0 +1,73 @@
+---
+title: "Blob Upload"
+description: "Upload and embed binary files in records"
+---
+
+# blob upload
+
+blobs are binary files (images, videos) referenced by records. they're uploaded separately then embedded.
+
+## upload a blob
+
+```bash
+pdsx upload-blob ./photo.jpg
+```
+
+returns:
+```json
+{
+  "$type": "blob",
+  "ref": {"$link": "bafyreif..."},
+  "mimeType": "image/jpeg",
+  "size": 123456
+}
+```
+
+## important
+
+blobs are **temporary** until referenced in a record. they're deleted after a few minutes if not used.
+
+## embed in records
+
+copy the entire blob object and embed it in a record field.
+
+example: post with image (using atproto SDK, not pdsx CLI):
+
+```python
+from atproto import AsyncClient
+
+client = AsyncClient()
+await client.login(handle, password)
+
+# upload blob
+blob_response = await client.com.atproto.repo.upload_blob(image_bytes)
+
+# create post with image
+await client.com.atproto.repo.create_record({
+    "repo": client.me.did,
+    "collection": "app.bsky.feed.post",
+    "record": {
+        "$type": "app.bsky.feed.post",
+        "text": "check this out!",
+        "embed": {
+            "$type": "app.bsky.embed.images",
+            "images": [{
+                "alt": "photo description",
+                "image": blob_response.blob  # the blob ref
+            }]
+        },
+        "createdAt": datetime.now(UTC).isoformat()
+    }
+})
+```
+
+## workflow
+
+1. upload blob immediately before creating record
+2. copy blob reference from response
+3. embed in record during creation
+4. if blob upload was too long ago, re-upload
+
+## limitations
+
+pdsx CLI doesn't support embedding blobs in create commands yet - you'll need to use the Python SDK for complex records with blobs.

@@ -1,0 +1,343 @@
+---
+title: "Addressing"
+description: "how pdsx locates and references records using AT-URIs and DIDs"
+---
+
+# addressing
+
+## the addressing problem
+
+to read or write a record, pdsx needs to know:
+1. which repository contains it
+2. which collection within that repository
+3. which specific record (if applicable)
+
+atproto solves this with **at-uris** and **dids**.
+
+## at-uri format
+
+at-uris identify records using this structure:
+
+```
+at://AUTHORITY/COLLECTION/RKEY
+```
+
+example:
+```
+at://did:plc:44ybard66vv44zksje25o7dz/app.bsky.feed.post/3jwdwj2ctlk26
+└─┘ └────────────────────────────┘ └──────────────────┘ └─────────────┘
+ │           authority                 collection           rkey
+scheme      (repository)
+```
+
+components:
+- **scheme**: always `at://`
+- **authority**: did or handle identifying the repository
+- **collection**: nsid of the collection (optional)
+- **rkey**: record key within collection (optional)
+
+## authority: did vs handle
+
+### using dids
+
+```
+at://did:plc:44ybard66vv44zksje25o7dz/app.bsky.feed.post/3jwdwj2ctlk26
+```
+
+dids are:
+- **permanent**: never change
+- **decentralized**: not controlled by any provider
+- **portable**: work even if user changes pds
+- **cryptographic**: tied to signing keys
+
+**best for**: durable references, long-term storage
+
+### using handles
+
+```
+at://jlowin.dev/app.bsky.feed.post/3jwdwj2ctlk26
+```
+
+handles are:
+- **human-readable**: easier to type/remember
+- **changeable**: user can update their handle
+- **reassignable**: if abandoned, someone else can claim it
+- **dns/http-based**: resolved via dns or .well-known
+
+**best for**: user-facing displays, temporary references
+
+**critical limitation**: if user changes handle, handle-based uris break or point to wrong repository.
+
+## how pdsx resolves addresses
+
+### with -r flag (handle)
+
+```bash
+pdsx -r jlowin.dev ls app.bsky.feed.post
+```
+
+resolution flow:
+1. resolve handle → did
+   - try dns: `_atproto.jlowin.dev` txt record
+   - fallback to https: `https://jlowin.dev/.well-known/atproto-did`
+2. resolve did → pds url
+   - fetch did document
+   - extract pds endpoint
+3. query pds for records
+4. return results
+
+### with -r flag (did)
+
+```bash
+pdsx -r did:plc:44ybard66vv44zksje25o7dz ls app.bsky.feed.post
+```
+
+resolution flow:
+1. skip handle resolution (already have did)
+2. resolve did → pds url
+3. query pds
+4. return results
+
+### without -r flag (authenticated)
+
+```bash
+pdsx ls app.bsky.feed.post
+```
+
+uses authenticated session:
+1. already authenticated with pds
+2. session knows your did
+3. query your own repository
+4. return results
+
+## shorthand uris in pdsx
+
+<Note>
+**IMPORTANT**: Shorthand URIs (`collection/rkey`) only work when you have an active authenticated session. Without authentication, you must use full AT-URIs (`at://authority/collection/rkey`). If you see an "invalid URI format" error, this is likely why.
+</Note>
+
+when authenticated, pdsx supports shorthand:
+
+### full uri
+
+```bash
+pdsx get at://did:plc:your-did/app.bsky.feed.post/3jwdwj2ctlk26
+```
+
+### shorthand (when authenticated)
+
+```bash
+pdsx get app.bsky.feed.post/3jwdwj2ctlk26
+```
+
+pdsx automatically:
+- uses your did from session
+- constructs full uri
+- executes operation
+
+this only works for **your own repository** - you're authenticated to it.
+
+## did document structure
+
+dids resolve to **did documents** that contain:
+
+```json
+{
+  "id": "did:plc:44ybard66vv44zksje25o7dz",
+  "alsoKnownAs": ["at://jlowin.dev"],
+  "verificationMethod": [
+    {
+      "id": "#atproto",
+      "type": "Multikey",
+      "controller": "did:plc:44ybard66vv44zksje25o7dz",
+      "publicKeyMultibase": "..."
+    }
+  ],
+  "service": [
+    {
+      "id": "#atproto_pds",
+      "type": "AtprotoPersonalDataServer",
+      "serviceEndpoint": "https://bsky.social"
+    }
+  ]
+}
+```
+
+key fields pdsx uses:
+- **service**: which pds hosts this repository
+- **alsoKnownAs**: current handle (for verification)
+- **verificationMethod**: public keys (for cryptographic verification)
+
+## pds discovery
+
+pdsx finds the pds hosting a repository:
+
+1. resolve authority (handle or did) → did
+2. fetch did document from plc directory
+3. extract `service` entry with type `AtprotoPersonalDataServer`
+4. use `serviceEndpoint` as pds url
+
+example:
+```
+did:plc:44ybard66vv44zksje25o7dz
+  → did document
+  → service endpoint: https://bsky.social
+  → pdsx connects to https://bsky.social
+```
+
+## --pds flag
+
+pdsx lets you override pds discovery:
+
+```bash
+pdsx --pds https://my-pds.example.com ls app.bsky.feed.post
+```
+
+useful for:
+- testing local pds
+- using non-standard pds
+- debugging
+
+**note**: authentication must still be with that specific pds.
+
+## why this addressing model matters
+
+### portability
+
+if user migrates pds:
+1. update did document → new service endpoint
+2. did-based uris still work
+3. handle-based uris still work (if handle unchanged)
+4. pdsx follows did document to find new pds
+
+### federation
+
+different users on different pds instances:
+- alice@pds1.com has did:plc:alice
+- bob@pds2.com has did:plc:bob
+- pdsx can read both repositories
+- resolves each did → correct pds
+
+### handles as aliases
+
+handles are just friendly names:
+- did is permanent identity
+- handle can change
+- handle can be reassigned
+- did document links them
+
+## authentication and addressing
+
+### reading public records
+
+```bash
+pdsx -r other-user.handle ls app.bsky.feed.post
+```
+
+no auth needed:
+- pdsx resolves handle → did → pds
+- queries pds as anonymous client
+- pds returns public records
+
+### writing to own repository
+
+```bash
+export ATPROTO_HANDLE=your.handle
+export ATPROTO_PASSWORD=your-password
+pdsx create app.bsky.feed.post text='hello'
+```
+
+auth flow:
+1. pdsx creates session with pds (using credentials)
+2. pds validates credentials
+3. pds returns session token + your did
+4. pdsx uses session for subsequent requests
+5. pds ensures you're writing to your own repository
+
+### cross-repository references
+
+when creating a record that references another repository's record:
+
+```bash
+pdsx create app.bsky.feed.like \
+  subject='at://other-user.handle/app.bsky.feed.post/abc123'
+```
+
+pdsx:
+- doesn't need auth to other-user's repository
+- just includes their uri in your record
+- stores in your repository
+- reference points across repositories
+
+## uri validation
+
+pdsx performs minimal uri validation:
+
+valid formats:
+```
+at://authority/collection/rkey      # full
+at://authority/collection            # collection-level
+at://authority                       # repository-level
+collection/rkey                      # shorthand (if authenticated)
+```
+
+invalid formats:
+```
+at://authority/invalid nsid/rkey    # spaces not allowed
+authority/collection/rkey            # missing scheme
+at://authority/rkey                  # missing collection
+```
+
+## why understanding addressing matters for pdsx
+
+**-r flag specifies repository**: can be handle or did
+```bash
+pdsx -r jlowin.dev ls collection     # handle
+pdsx -r did:plc:abc123 ls collection  # did
+```
+
+**shorthand requires auth**: only works for your own repository
+```bash
+pdsx get collection/rkey              # needs auth
+```
+
+**full uris are more durable**: use dids, not handles
+```bash
+# durable
+at://did:plc:abc123/collection/rkey
+
+# fragile (if handle changes)
+at://user.handle/collection/rkey
+```
+
+**pds is discovered automatically**: unless overridden with --pds
+
+## from concept to command
+
+these addressing concepts translate directly to pdsx usage:
+
+**reading with handle**:
+```bash
+pdsx -r jlowin.dev ls app.bsky.feed.post
+```
+pdsx resolves handle → DID → PDS → fetches records
+
+**reading with DID** (more durable):
+```bash
+pdsx -r did:plc:44ybard66vv44zksje25o7dz ls app.bsky.feed.post
+```
+pdsx finds PDS from DID document → fetches records
+
+**shorthand (authenticated only)**:
+```bash
+pdsx get app.bsky.feed.post/3jwdwj2ctlk26
+pdsx edit app.bsky.actor.profile/self description='new bio'
+```
+pdsx uses `client.me.did` from session to construct full URI
+
+## further reading
+
+- [at-uri specification](https://atproto.com/specs/at-uri-scheme)
+- [did specification](https://atproto.com/specs/did)
+- [handle resolution](https://atproto.com/specs/handle)
+- [pds service](https://atproto.com/specs/atp)

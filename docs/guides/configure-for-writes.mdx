@@ -1,0 +1,62 @@
+---
+title: "Configure pdsx for Writes"
+description: "Set up authentication to create, update, and delete records"
+---
+
+# configure pdsx for writes
+
+reading public records with `-r` doesn't require authentication, but any write operations (create, update, delete) need credentials.
+
+## install pdsx
+
+```bash
+# one-time use
+uvx pdsx --help
+
+# add to project
+uv add pdsx
+```
+
+## obtain an app password
+
+go to Bluesky settings → App Passwords and create a new one. format: `xxxx-xxxx-xxxx-xxxx`
+
+use the app password, not your account password.
+
+## configure credentials
+
+### environment variables
+
+```bash
+export ATPROTO_HANDLE=your.handle.bsky.social
+export ATPROTO_PASSWORD=xxxx-xxxx-xxxx-xxxx
+```
+
+or create a `.env` file (add to `.gitignore`):
+
+```bash
+ATPROTO_HANDLE=your.handle.bsky.social
+ATPROTO_PASSWORD=xxxx-xxxx-xxxx-xxxx
+```
+
+### command-line flags
+
+```bash
+pdsx --handle your.handle --password xxxx-xxxx-xxxx-xxxx create ...
+```
+
+## verify authentication
+
+```bash
+pdsx ls app.bsky.actor.profile
+```
+
+## use a test account
+
+when learning pdsx, use a test Bluesky account to avoid modifying your main profile.
+
+## what's next
+
+- [read any repository](/guides/read-repositories) - explore public data
+- [create, update, delete safely](/guides/crud-safety) - write operations workflow
+- [repositories concept](/concepts/repositories) - understand the auth model

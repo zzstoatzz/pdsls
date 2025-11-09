@@ -1,0 +1,64 @@
+---
+title: "Create, Update, Delete Safely"
+description: "CRUD operations workflow with safety best practices"
+---
+
+# create, update, delete
+
+write operations require authentication. use a test account when learning.
+
+```bash
+export ATPROTO_HANDLE=your.handle
+export ATPROTO_PASSWORD=your-app-password
+```
+
+## create
+
+```bash
+pdsx create app.bsky.feed.post text='hello world' langs='["en"]'
+```
+
+pdsx adds `$type` and `createdAt` automatically. validation happens server-side - check [lexicon docs](https://github.com/bluesky-social/atproto/tree/main/lexicons/app/bsky) for required fields.
+
+## update
+
+```bash
+# get record key from ls output
+pdsx ls app.bsky.feed.post -o json | jq -r '.[] | "\(.uri) - \(.value.text)"'
+
+# update
+pdsx edit app.bsky.feed.post/RKEY text='updated text'
+
+# update profile
+pdsx edit app.bsky.actor.profile/self description='new bio'
+```
+
+## delete
+
+```bash
+pdsx rm app.bsky.feed.post/RKEY
+```
+
+delete is permanent - no undo.
+
+## workflow
+
+```bash
+# create
+pdsx create app.bsky.feed.post text='test'
+
+# verify
+pdsx ls app.bsky.feed.post --limit 1 -o json | jq -r '.[0].value.text'
+
+# edit
+pdsx edit app.bsky.feed.post/RKEY text='updated'
+
+# delete
+pdsx rm app.bsky.feed.post/RKEY
+```
+
+## what's next
+
+- [blob upload workflow](/guides/blob-upload) - attach images to posts
+- [URI troubleshooting](/guides/uri-troubleshooting) - understand shorthand vs full URIs
+- [records concept](/concepts/records-and-collections) - understand lexicons and validation

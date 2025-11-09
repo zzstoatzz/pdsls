@@ -1,0 +1,265 @@
+---
+title: "Repositories"
+description: "understanding the repository model and how pdsx interacts with it"
+---
+
+# repositories
+
+## what is a repository?
+
+in atproto, a **repository** is a user's personal data store - a signed collection of records that represents everything that user has created. each account has exactly one repository.
+
+think of it as:
+- git repo, but for database records
+- key-value store where keys are paths, values are records
+- cryptographically signed (verifiable, tamper-evident)
+- portable (can move between pds instances)
+
+## where repositories live
+
+repositories are hosted on **personal data servers (pds)**:
+
+```
+user account → repository → hosted on pds
+```
+
+the pds is just storage - it doesn't control the data:
+- user owns the repository (has signing keys)
+- user can migrate to different pds
+- pds failure doesn't mean data loss (repositories are portable)
+
+**pdsx talks directly to pds instances** to read/write records in repositories.
+
+## repository structure
+
+repositories organize records using a path-based structure:
+
+```
+<collection>/<rkey>
+```
+
+example paths:
+```
+app.bsky.feed.post/3jwdwj2ctlk26
+app.bsky.actor.profile/self
+app.bsky.graph.follow/3k2y5tqw7ml2r
+```
+
+### collections
+
+collections group related records together:
+- identified by nsid (namespaced id)
+- all records of same type go in same collection
+- examples: posts, likes, follows, profiles
+
+collections are not arbitrary - they're defined by **lexicon schemas** that specify:
+- what fields are required/optional
+- what types those fields must be
+- validation rules
+
+### record keys (rkeys)
+
+rkeys uniquely identify a record within its collection:
+- most use tid (timestamp identifier) format
+- some use fixed keys (`self` for profiles)
+- chronologically sortable (tids)
+- unique within collection
+
+## merkle search tree (mst)
+
+internally, repositories use a **merkle search tree**:
+
+```
+records → sorted by path → stored in mst → referenced by hash (cid)
+```
+
+why this matters for pdsx:
+- **efficient listing**: records in same collection are adjacent
+- **verifiable**: each commit has a hash, creates audit trail
+- **deterministic**: same records = same tree structure
+
+when you use `pdsx ls app.bsky.feed.post`, you're traversing this tree to enumerate records in that collection.
+
+## repository commits
+
+every change creates a signed commit:
+
+```
+change records → create new mst → sign commit → new cid
+```
+
+commits form a chain:
+```
+commit 1 → commit 2 → commit 3 (current)
+```
+
+**implications for pdsx**:
+- writes create new commits
+- repositories have full history
+- commits are cryptographically signed (verifiable)
+
+## did as repository identifier
+
+each repository is identified by its owner's **did** (decentralized identifier):
+
+```
+at://did:plc:44ybard66vv44zksje25o7dz/app.bsky.feed.post/3jwdwj2ctlk26
+      └────────────────────────────┘
+               repository
+```
+
+the did:
+- is permanent (doesn't change if user moves pds)
+- controls the repository (has signing keys)
+- resolves to pds location (via did document)
+
+## authentication model
+
+repository access has two modes:
+
+### unauthenticated reads
+anyone can read public records from any repository:
+
+```bash
+# no auth needed - reading someone else's public data
+pdsx -r jlowin.dev ls app.bsky.feed.post
+```
+
+pdsx resolves the handle → did → pds location → fetches records
+
+### authenticated writes
+writing to a repository requires:
+- handle + password
+- creates session with pds
+- session proves you control the did
+
+```bash
+# auth needed - writing to your own repository
+export ATPROTO_HANDLE=your.handle
+export ATPROTO_PASSWORD=your-password
+pdsx create app.bsky.feed.post text='hello'
+```
+
+**why this design?**
+- public data is public (no gatekeeping)
+- private data stays private (auth required)
+- users control their repositories (not the pds)
+
+## cross-repository references
+
+records can reference records in other repositories:
+
+```json
+{
+  "$type": "app.bsky.feed.like",
+  "subject": {
+    "uri": "at://did:plc:other-user/app.bsky.feed.post/abc123",
+    "cid": "bafyrei..."
+  }
+}
+```
+
+the reference includes:
+- uri (which repository + collection + rkey)
+- cid (content hash for verification)
+
+this is a **strong reference** - includes hash to detect if referenced record changes.
+
+## repository portability
+
+repositories can move between pds instances:
+
+1. export repository (all records + blobs)
+2. update did document (point to new pds)
+3. import to new pds
+4. old pds becomes irrelevant
+
+**pdsx doesn't care where repository is hosted** - it follows the did to find the current pds.
+
+## how pdsx uses repositories
+
+### reading records
+```bash
+pdsx -r user.handle ls collection
+```
+
+1. resolve handle → did
+2. resolve did → pds url
+3. fetch records from pds
+4. return to user
+
+### writing records
+```bash
+pdsx create collection field=value
+```
+
+1. authenticate with pds
+2. construct record
+3. submit to pds
+4. pds updates repository mst
+5. pds creates signed commit
+
+### listing collections
+```bash
+pdsx ls app.bsky.feed.post
+```
+
+traverses mst to enumerate all records in that collection path
+
+## federation model
+
+atproto is federated:
+- many pds instances
+- each hosts many repositories
+- users choose their pds
+- repositories are portable
+
+**pdsx is pds-agnostic** - works with any pds implementing the atproto spec:
+- bsky.social (bluesky's pds)
+- self-hosted pds
+- third-party providers
+
+## why understanding repositories matters
+
+knowing the repository model helps you understand:
+
+**why handles vs dids**: handles change, dids don't - use dids for durability
+
+**why collections**: records are grouped by type for efficient access
+
+**why authentication works this way**: reading public data doesn't need auth, writing does
+
+**why records are portable**: repositories are user-owned, pds is just hosting
+
+**why pdsx has the flags it does**: `-r` specifies which repository, `--pds` specifies which server
+
+## from concept to command
+
+the repository model maps directly to pdsx commands:
+
+**reading from any repository** (no auth needed):
+```bash
+# using handle
+pdsx -r jlowin.dev ls app.bsky.feed.post
+
+# using DID (more durable)
+pdsx -r did:plc:44ybard66vv44zksje25o7dz ls app.bsky.feed.post
+```
+pdsx resolves to the PDS hosting that repository and fetches public records
+
+**writing to your repository** (auth required):
+```bash
+export ATPROTO_HANDLE=your.handle
+export ATPROTO_PASSWORD=your-app-password
+pdsx create app.bsky.feed.post text='hello world'
+```
+pdsx authenticates with your PDS, creates a session with your DID, and writes to your repository
+
+**why the `-r` flag exists**: it specifies which repository to read from. without it, pdsx uses your authenticated repository (from `client.me.did`)
+
+## further reading
+
+- [atproto repository spec](https://atproto.com/specs/repository)
+- [did specification](https://atproto.com/specs/did)
+- [merkle search trees](https://atproto.com/specs/repository#merkle-search-tree-mst)
+- [federation architecture](https://atproto.com/guides/overview)

@@ -1,0 +1,76 @@
+---
+title: "AT-URI vs Shorthand"
+description: "Understand URI formats and fix 'invalid URI format' errors"
+---
+
+# at-uri vs shorthand
+
+## the error
+
+```bash
+$ pdsx get app.bsky.feed.post/3m52prkzaaq2v
+error: invalid URI format
+```
+
+shorthand URIs (`collection/rkey`) only work when authenticated. pdsx needs your DID from the session.
+
+## fix: authenticate or use full URI
+
+```bash
+# option 1: authenticate
+export ATPROTO_HANDLE=your.handle ATPROTO_PASSWORD=your-app-password
+pdsx get app.bsky.feed.post/3m52prkzaaq2v
+
+# option 2: use full AT-URI
+pdsx get at://did:plc:o53crari67ge7bvbv273lxln/app.bsky.feed.post/3m52pstmbzk2d
+```
+
+## AT-URI format
+
+full AT-URIs have three parts:
+
+```
+at://AUTHORITY/COLLECTION/RKEY
+```
+
+example:
+```
+at://did:plc:44ybard66vv44zksje25o7dz/app.bsky.feed.post/3jwdwj2ctlk26
+└─┘ └────────────────────────────┘ └──────────────────┘ └─────────────┘
+ │           authority                 collection           rkey
+scheme      (DID or handle)
+```
+
+## constructing AT-URIs
+
+```bash
+# get URI from ls output
+pdsx -r jlowin.dev ls app.bsky.feed.post -o json | jq -r '.[0].uri'
+```
+
+## shorthand examples
+
+```bash
+# authenticated only:
+pdsx get app.bsky.feed.post/3jwdwj2ctlk26
+pdsx edit app.bsky.actor.profile/self description='new bio'
+pdsx rm app.bsky.feed.post/3jwdwj2ctlk26
+```
+
+## DID vs handle in URIs
+
+DIDs are permanent. handles can change or be reassigned. use DIDs for durable references.
+
+```bash
+# DID (permanent)
+at://did:plc:44ybard66vv44zksje25o7dz/app.bsky.feed.post/3jwdwj2ctlk26
+
+# handle (fragile)
+at://jlowin.dev/app.bsky.feed.post/3jwdwj2ctlk26
+```
+
+## what's next
+
+- [configure for writes](/guides/configure-for-writes) - set up authentication for shorthand
+- [read repositories](/guides/read-repositories) - use full URIs to read any repo
+- [addressing concept](/concepts/addressing) - deep dive into URI structure

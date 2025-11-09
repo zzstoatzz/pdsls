@@ -1,0 +1,91 @@
+---
+title: "Read Any Repository"
+description: "Explore public records using handles or DIDs"
+---
+
+# read any repository
+
+pdsx can read public records from any repository without authentication using the `-r` flag.
+
+## basic usage
+
+### read with handle
+
+```bash
+pdsx -r jlowin.dev ls app.bsky.feed.post --limit 5
+```
+
+pdsx resolves:
+1. handle → DID (via DNS TXT or HTTPS well-known)
+2. DID → PDS url (from DID document)
+3. fetches records from PDS
+
+### read with DID (more durable)
+
+```bash
+pdsx -r did:plc:44ybard66vv44zksje25o7dz ls app.bsky.feed.post --limit 5
+```
+
+DIDs are permanent identifiers - they don't change if user updates their handle.
+
+## handles vs DIDs
+
+handles can change or be reassigned. DIDs are permanent. use DIDs for automation or long-term references.
+
+## pagination
+
+```bash
+# first page
+pdsx -r jlowin.dev ls app.bsky.feed.post --limit 10
+# next page cursor: 3lyqmkpiprs2w
+
+# next page
+pdsx -r jlowin.dev ls app.bsky.feed.post --limit 10 --cursor 3lyqmkpiprs2w
+```
+
+cursors are opaque tokens. for json/yaml output, they go to stderr.
+
+## output formats
+
+```bash
+# json (for jq pipelines)
+pdsx -r jlowin.dev ls app.bsky.feed.post -o json | jq -r '.[].text'
+
+# yaml
+pdsx -r jlowin.dev ls app.bsky.actor.profile -o yaml
+
+# table
+pdsx -r jlowin.dev ls app.bsky.feed.post -o table --limit 5
+
+# compact (default)
+pdsx -r jlowin.dev ls app.bsky.feed.post
+```
+
+## examples
+
+```bash
+# read someone's bio
+pdsx -r jlowin.dev ls app.bsky.actor.profile -o json | jq -r '.[0].description'
+
+# get recent posts
+pdsx -r did:plc:o53crari67ge7bvbv273lxln ls app.bsky.feed.post --limit 3 -o json
+```
+
+## common collections
+
+| collection | contains |
+|-----------|----------|
+| `app.bsky.feed.post` | posts/skeets |
+| `app.bsky.actor.profile` | user profile |
+| `app.bsky.feed.like` | likes |
+| `app.bsky.graph.follow` | follows |
+| `app.bsky.feed.repost` | reposts |
+| `app.bsky.graph.list` | lists |
+
+
+## what's next
+
+- [AT-URI troubleshooting](/guides/uri-troubleshooting) - understand URI formats
+- [configure for writes](/guides/configure-for-writes) - set up authentication
+- [repositories concept](/concepts/repositories) - understand the data model
+- [addressing concept](/concepts/addressing) - deep dive into DIDs and handles

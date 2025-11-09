@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 from atproto import AsyncClient, models
 
-from pdsx._internal.operations import delete_record, update_record
+from pdsx._internal.operations import delete_record, list_records, update_record
 
 
 @pytest.fixture
@@ -148,3 +148,54 @@ class TestDeleteRecord:
                 mock_client,
                 "invalid",
             )
+
+
+class TestListRecords:
+    """tests for list_records function."""
+
+    async def test_list_records_without_cursor(self, mock_client: AsyncClient) -> None:
+        """test listing records without cursor."""
+        mock_response = models.ComAtprotoRepoListRecords.Response(
+            records=[],
+            cursor=None,
+        )
+        mock_client.com.atproto.repo.list_records = AsyncMock(  # type: ignore[attr-defined]
+            return_value=mock_response
+        )
+
+        result = await list_records(
+            mock_client,
+            "app.bsky.feed.post",
+            limit=50,
+        )
+
+        assert result == mock_response
+        mock_client.com.atproto.repo.list_records.assert_called_once()
+        call_args = mock_client.com.atproto.repo.list_records.call_args[0][0]
+        assert call_args["collection"] == "app.bsky.feed.post"
+        assert call_args["limit"] == 50
+        assert "cursor" not in call_args
+
+    async def test_list_records_with_cursor(self, mock_client: AsyncClient) -> None:
+        """test listing records with cursor for pagination."""
+        mock_response = models.ComAtprotoRepoListRecords.Response(
+            records=[],
+            cursor="next_page_cursor",
+        )
+        mock_client.com.atproto.repo.list_records = AsyncMock(  # type: ignore[attr-defined]
+            return_value=mock_response
+        )
+
+        result = await list_records(
+            mock_client,
+            "app.bsky.feed.post",
+            limit=50,
+            cursor="previous_cursor",
+        )
+
+        assert result == mock_response
+        mock_client.com.atproto.repo.list_records.assert_called_once()
+        call_args = mock_client.com.atproto.repo.list_records.call_args[0][0]
+        assert call_args["collection"] == "app.bsky.feed.post"
+        assert call_args["limit"] == 50
+        assert call_args["cursor"] == "previous_cursor"
