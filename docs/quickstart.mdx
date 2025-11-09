@@ -24,13 +24,13 @@ read anyone's public records without authentication:
 
 ```bash
 # list someone's posts
-pdsx -r jlowin.dev ls app.bsky.feed.post --limit 5
+pdsx -r zzstoatzz.io ls app.bsky.feed.post --limit 5
 
 # get their profile
-pdsx -r jlowin.dev get app.bsky.actor.profile/self
+pdsx -r zzstoatzz.io get app.bsky.actor.profile/self
 
 # use json output with jq
-pdsx -r jlowin.dev ls app.bsky.feed.post -o json | jq -r '.[] | .text'
+pdsx -r zzstoatzz.io ls app.bsky.feed.post -o json | jq -r '.[] | .text'
 ```
 
 **tip**: `-r` is the repo flag - it can be a handle or did

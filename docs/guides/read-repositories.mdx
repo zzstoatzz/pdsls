@@ -12,7 +12,7 @@ pdsx can read public records from any repository without authentication using th
 ### read with handle
 
 ```bash
-pdsx -r jlowin.dev ls app.bsky.feed.post --limit 5
+pdsx -r zzstoatzz.io ls app.bsky.feed.post --limit 5
 ```
 
 pdsx resolves:
@@ -36,11 +36,11 @@ handles can change or be reassigned. DIDs are permanent. use DIDs for automation
 
 ```bash
 # first page
-pdsx -r jlowin.dev ls app.bsky.feed.post --limit 10
+pdsx -r zzstoatzz.io ls app.bsky.feed.post --limit 10
 # next page cursor: 3lyqmkpiprs2w
 
 # next page
-pdsx -r jlowin.dev ls app.bsky.feed.post --limit 10 --cursor 3lyqmkpiprs2w
+pdsx -r zzstoatzz.io ls app.bsky.feed.post --limit 10 --cursor 3lyqmkpiprs2w
 ```
 
 cursors are opaque tokens. for json/yaml output, they go to stderr.
@@ -49,23 +49,23 @@ cursors are opaque tokens. for json/yaml output, they go to stderr.
 
 ```bash
 # json (for jq pipelines)
-pdsx -r jlowin.dev ls app.bsky.feed.post -o json | jq -r '.[].text'
+pdsx -r zzstoatzz.io ls app.bsky.feed.post -o json | jq -r '.[].text'
 
 # yaml
-pdsx -r jlowin.dev ls app.bsky.actor.profile -o yaml
+pdsx -r zzstoatzz.io ls app.bsky.actor.profile -o yaml
 
 # table
-pdsx -r jlowin.dev ls app.bsky.feed.post -o table --limit 5
+pdsx -r zzstoatzz.io ls app.bsky.feed.post -o table --limit 5
 
 # compact (default)
-pdsx -r jlowin.dev ls app.bsky.feed.post
+pdsx -r zzstoatzz.io ls app.bsky.feed.post
 ```
 
 ## examples
 
 ```bash
 # read someone's bio
-pdsx -r jlowin.dev ls app.bsky.actor.profile -o json | jq -r '.[0].description'
+pdsx -r zzstoatzz.io ls app.bsky.actor.profile -o json | jq -r '.[0].description'
 
 # get recent posts
 pdsx -r did:plc:o53crari67ge7bvbv273lxln ls app.bsky.feed.post --limit 3 -o json

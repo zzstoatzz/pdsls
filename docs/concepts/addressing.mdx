@@ -55,7 +55,7 @@ dids are:
 ### using handles
 
 ```
-at://jlowin.dev/app.bsky.feed.post/3jwdwj2ctlk26
+at://zzstoatzz.io/app.bsky.feed.post/3jwdwj2ctlk26
 ```
 
 handles are:
@@ -73,13 +73,13 @@ handles are:
 ### with -r flag (handle)
 
 ```bash
-pdsx -r jlowin.dev ls app.bsky.feed.post
+pdsx -r zzstoatzz.io ls app.bsky.feed.post
 ```
 
 resolution flow:
 1. resolve handle → did
-   - try dns: `_atproto.jlowin.dev` txt record
-   - fallback to https: `https://jlowin.dev/.well-known/atproto-did`
+   - try dns: `_atproto.zzstoatzz.io` txt record
+   - fallback to https: `https://zzstoatzz.io/.well-known/atproto-did`
 2. resolve did → pds url
    - fetch did document
    - extract pds endpoint
@@ -144,7 +144,7 @@ dids resolve to **did documents** that contain:
 ```json
 {
   "id": "did:plc:44ybard66vv44zksje25o7dz",
-  "alsoKnownAs": ["at://jlowin.dev"],
+  "alsoKnownAs": ["at://zzstoatzz.io"],
   "verificationMethod": [
     {
       "id": "#atproto",
@@ -292,7 +292,7 @@ at://authority/rkey                  # missing collection
 
 **-r flag specifies repository**: can be handle or did
 ```bash
-pdsx -r jlowin.dev ls collection     # handle
+pdsx -r zzstoatzz.io ls collection     # handle
 pdsx -r did:plc:abc123 ls collection  # did
 ```
 
@@ -318,7 +318,7 @@ these addressing concepts translate directly to pdsx usage:
 
 **reading with handle**:
 ```bash
-pdsx -r jlowin.dev ls app.bsky.feed.post
+pdsx -r zzstoatzz.io ls app.bsky.feed.post
 ```
 pdsx resolves handle → DID → PDS → fetches records
 
