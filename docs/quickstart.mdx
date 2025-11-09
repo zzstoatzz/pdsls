@@ -26,8 +26,8 @@ read anyone's public records without authentication:
 # list someone's posts
 pdsx -r zzstoatzz.io ls app.bsky.feed.post --limit 5
 
-# get their profile
-pdsx -r zzstoatzz.io get app.bsky.actor.profile/self
+# read their profile
+pdsx -r zzstoatzz.io ls app.bsky.actor.profile -o json | jq -r '.[0].description'
 
 # use json output with jq
 pdsx -r zzstoatzz.io ls app.bsky.feed.post -o json | jq -r '.[] | .text'
