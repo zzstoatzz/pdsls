@@ -14,12 +14,14 @@ uvx pdsx --help
 
 ## quick start
 
-```bash
-# read anyone's posts (no auth)
-uvx pdsx -r did:plc:o53crari67ge7bvbv273lxln ls app.bsky.feed.post -o json | jq -r '.[].text'
+**important**: flags like `-r`, `--handle`, `--password` go BEFORE the command (`ls`, `get`, etc.)
 
-# update your bio (with auth)
-export ATPROTO_HANDLE=your.handle ATPROTO_PASSWORD=your-password
+```bash
+# read anyone's posts (no auth needed)
+uvx pdsx -r zzstoatzz.io ls app.bsky.feed.post -o json | jq -r '.[].text'
+
+# update your bio (requires auth)
+export ATPROTO_HANDLE=your.handle ATPROTO_PASSWORD=your-app-password
 uvx pdsx edit app.bsky.actor.profile/self description='new bio'
 ```
 
@@ -38,27 +40,27 @@ uvx pdsx edit app.bsky.actor.profile/self description='new bio'
 <details>
 <summary>usage examples</summary>
 
-### read operations (no auth with --repo)
+### read operations (no auth with -r)
 
 ```bash
-# list records from any repo
-pdsx -r did:plc:... ls app.bsky.feed.post --limit 5 -o json
+# list records from any repo (note: -r goes BEFORE ls)
+pdsx -r zzstoatzz.io ls app.bsky.feed.post --limit 5 -o json
 
 # read someone's bio
-pdsx -r did:plc:o53crari67ge7bvbv273lxln ls app.bsky.actor.profile -o json | jq -r '.[0].description'
+pdsx -r zzstoatzz.io ls app.bsky.actor.profile -o json | jq -r '.[0].description'
 ```
 
 ### pagination
 
 ```bash
-# get first page of posts
-pdsx -r jlowin.dev ls app.bsky.feed.post --limit 10
+# get first page (note: -r before ls, --cursor after)
+pdsx -r zzstoatzz.io ls app.bsky.feed.post --limit 10
 
 # output includes cursor if more pages exist:
 # next page cursor: 3lyqmkpiprs2w
 
-# get next page using cursor
-pdsx -r jlowin.dev ls app.bsky.feed.post --limit 10 --cursor 3lyqmkpiprs2w
+# get next page
+pdsx -r zzstoatzz.io ls app.bsky.feed.post --limit 10 --cursor 3lyqmkpiprs2w
 ```
 
 ### blob upload (auth required)
