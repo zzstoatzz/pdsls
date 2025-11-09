@@ -1,242 +1,309 @@
 ---
-title: "Blob Upload"
-description: "upload and manage binary content like images and videos"
+title: "Blobs"
+description: "content addressing and binary data in atproto"
 ---
 
-# blob upload
+# blobs in atproto
 
-blobs are binary large objects - images, videos, audio files, and other non-text content in atproto. before you can reference a blob in a record (like a post with an image), you must first upload it.
+## what are blobs?
 
-## upload workflow
+blobs (binary large objects) are how atproto handles non-text data - images, videos, audio, documents. unlike records (json), blobs are opaque binary data referenced by records.
 
-### 1. upload the blob
+## content addressing
 
-```bash
-pdsx upload-blob ./photo.jpg
+atproto uses **content addressing** for blobs - data is identified by its content hash, not location.
+
+### traditional location-based storage
+```
+https://cdn.example.com/users/alice/photo.jpg
+└─ location determines identity
 ```
 
-output:
+problems:
+- link breaks if file moves
+- can't verify content hasn't changed
+- duplication if same file uploaded multiple times
+
+### content-addressed storage (atproto)
 ```
-✓ blob uploaded successfully
-
-blob reference:
-{
-  "$type": "blob",
-  "ref": {"$link": "bafkreif4oxjpqppiy6qvxpmgk7dv2sgxh6kanc5e5aztvgqvqho2q34c5u"},
-  "mimeType": "image/jpeg",
-  "size": 49004
-}
-
-use this blob reference in records (e.g., for post embeds)
+bafkreif4oxjpqppiy6qvxpmgk7dv2sgxh6kanc5e5aztvgqvqho2q34c5u
+└─ content hash determines identity
 ```
 
-### 2. use in a record
+benefits:
+- same content = same identifier (deduplication)
+- can verify integrity (hash the data, compare to id)
+- immutable - changing content changes id
+- location-independent
 
-the blob reference can be used in any record that accepts blobs:
+## cid (content identifier)
 
-```bash
-# example: create a post with an image (simplified - actual embed structure is more complex)
-# you would typically construct the full embed structure programmatically
+atproto uses **cid** (content identifier) from ipfs/ipld:
+
+```
+bafkreif4oxjpqppiy6qvxpmgk7dv2sgxh6kanc5e5aztvgqvqho2q34c5u
+└─┬─┘ └──────────────────────────────────────────────┘
+  │                    multihash (sha-256)
+  └─ multibase prefix (base32)
 ```
 
-## blob reference structure
+### components
+
+**multibase**: encoding format (base32, base64, etc)
+- `bafkrei...` = base32
+- allows future encoding changes
+
+**multihash**: cryptographic hash
+- sha-256 by default
+- includes hash algorithm identifier
+- allows future algorithm changes
+
+### immutability
+
+cids are immutable by design:
+- change one byte → completely different cid
+- can't "update" a blob, only upload new one
+- guarantees integrity (tamper-evident)
+
+## blob lifecycle
+
+### 1. upload (temporary storage)
+
+```
+client uploads bytes → server computes cid → temporary storage
+```
+
+temporary blobs:
+- stored for ~1 hour
+- not accessible via public url
+- will be garbage collected if not referenced
+
+**why temporary?** prevents spam - server doesn't commit resources until blob is actually used.
+
+### 2. reference in record
+
+```
+create/update record → record references blob cid → blob promoted to permanent
+```
+
+once a record references the blob:
+- blob moves to permanent storage
+- becomes accessible via cdn/url
+- protected from garbage collection
+
+### 3. garbage collection
+
+blobs are deleted when:
+- temporary and unreferenced after timeout
+- no records reference them anymore
+- parent record deleted
+
+**reference counting**: server tracks which records reference each blob. when ref count hits zero, blob is eligible for gc.
+
+## blob references in records
+
+blobs are embedded in records via **blob references**:
 
 ```json
 {
   "$type": "blob",
   "ref": {
-    "$link": "bafkreif..."  // cid (content identifier)
+    "$link": "bafkreif4oxjpqppiy6qvxpmgk7dv2sgxh6kanc5e5aztvgqvqho2q34c5u"
   },
-  "mimeType": "image/jpeg",  // detected mime type
-  "size": 49004              // bytes
+  "mimeType": "image/jpeg",
+  "size": 49004
 }
 ```
 
-### cid (content identifier)
-- unique hash of the content
-- starts with `bafkrei...` or `bafybei...`
-- content-addressed: same file = same cid
-- immutable: can't change blob content
+### fields
 
-### mime type
-automatically detected from file:
-- images: `image/jpeg`, `image/png`, `image/gif`, `image/webp`
-- video: `video/mp4`, `video/webm`
-- others: varies by pds
+**$type**: identifies this as a blob reference (not the blob data itself)
 
-### size limits
-varies by pds and blob type:
-- images: typically 1mb limit
-- videos: varies widely (can be 50mb+ on some instances)
+**ref.$link**: the cid (content identifier) - points to the actual blob data
 
-check your pds documentation for specific limits.
+**mimeType**: content type for rendering
+- server-validated on upload
+- used by clients for display decisions
 
-## blob lifecycle
+**size**: bytes
+- for client storage/bandwidth planning
+- validated on upload against size limits
 
-### temporary storage
-after upload, blobs enter **temporary storage**:
-- stored for ~1 hour
-- not yet accessible via url
-- will be garbage collected if not referenced
+## deduplication
 
-### permanent storage
-blobs become permanent when:
-1. you create/update a record that references the blob
-2. the pds moves the blob to permanent storage
-3. the blob becomes accessible via cdn/url
+content addressing enables automatic deduplication:
 
-example:
-```bash
-# upload blob
-pdsx upload-blob photo.jpg
-# returns blob ref with cid: bafkreif...
-
-# blob is temporary (1 hour ttl)
-
-# use in record (your application code)
-# creates post with image embed using the blob ref
-
-# blob is now permanent
+```
+user A uploads cat.jpg → cid: bafkrei123...
+user B uploads same cat.jpg → cid: bafkrei123... (identical!)
 ```
 
-### deletion
-blobs are deleted when:
-- no records reference them (garbage collected)
-- the record referencing them is deleted
-- you explicitly delete them (advanced usage)
+server can:
+- detect duplicate (same cid)
+- reuse existing storage
+- only store once, reference multiple times
 
-## common use cases
+benefits:
+- reduced storage costs
+- faster uploads (check before transferring)
+- bandwidth savings
 
-### profile pictures
+## size limits
 
-```bash
-# upload avatar
-pdsx upload-blob avatar.jpg
-# copy blob reference
+blobs have size constraints that vary by:
+- pds instance policies
+- blob mime type
+- user account tier
 
-# update profile with avatar blob ref
-# (programmatic - pdsx doesn't have high-level profile update yet)
+typical limits:
+- images: 1mb
+- videos: 50mb (varies widely)
+- total user storage quotas
+
+**why limits?** prevents resource exhaustion on pds instances. atproto is federated - each pds sets own policies.
+
+## mime type validation
+
+servers validate mime types to prevent abuse:
+
+```
+upload video/mp4 → check magic bytes → verify matches declared mime type
 ```
 
-### post images
+validation prevents:
+- serving malicious content disguised as images
+- mime type confusion attacks
+- incorrect client rendering
 
-```bash
-# upload image
-blob_ref=$(pdsx upload-blob vacation.jpg -o json | jq -r '.ref["$link"]')
+**magic bytes**: file format signatures embedded in data. server reads these to verify actual format matches declared mime type.
 
-# use in post embed
-# (requires constructing proper app.bsky.embed.images structure)
+## access patterns
+
+### direct access
+blobs can be fetched by cid:
+```
+GET https://pds.example.com/xrpc/com.atproto.sync.getBlob?cid=bafkrei...
 ```
 
-### multiple images
+### cdn distribution
+pds instances may use cdns for blob delivery:
+- geographically distributed
+- cached at edge
+- reduced pds load
 
-```bash
-# upload multiple images
-pdsx upload-blob image1.jpg > blob1.json
-pdsx upload-blob image2.jpg > blob2.json
-pdsx upload-blob image3.jpg > blob3.json
+### authentication
+blob access typically requires:
+- public blobs: no auth
+- private blobs: requires valid did auth
 
-# combine into images array for post
-# (max 4 images per post on bluesky)
+## design tradeoffs
+
+### immutability vs updates
+content addressing means blobs can't be "edited":
+
+**advantage**: integrity guarantees - what you reference is what you get
+
+**disadvantage**: updating requires:
+1. upload new blob → new cid
+2. update record reference → point to new cid
+3. old blob garbage collected
+
+### storage vs bandwidth
+deduplication saves storage but requires:
+- hash computation on upload
+- lookup before storing
+- slightly slower upload path
+
+**tradeoff**: atproto chooses storage efficiency over upload speed.
+
+### temporary storage overhead
+temporary blobs create gc overhead:
+
+**advantage**: prevents spam, only commit after use
+
+**disadvantage**: server must track timeouts, run gc
+
+**tradeoff**: atproto chooses spam prevention over simplicity.
+
+## distribution model
+
+### pds-centric storage
+blobs live on the pds that hosts the repository:
+```
+alice@pds1.com uploads blob → stored on pds1.com
+bob@pds2.com uploads blob → stored on pds2.com (even if same content!)
 ```
 
-## advanced topics
+**no cross-pds deduplication** - each pds manages own blobs independently.
 
-### content addressing
-same file = same cid:
+**why?** simplifies federation - no shared storage to coordinate.
 
-```bash
-pdsx upload-blob cat.jpg
-# cid: bafkreiabc123...
-
-# upload same file again
-pdsx upload-blob cat.jpg
-# cid: bafkreiabc123...  (identical)
+### relay distribution
+relays may cache blobs for performance but don't own them:
+```
+pds1 → relay (cache) → clients
 ```
 
-this means:
-- duplicate uploads are idempotent
-- same content can be referenced by multiple records
-- efficient storage deduplication
+## security considerations
 
-### mime type detection
-pdsx uses the atproto library's mime detection, which:
-- reads file magic bytes
-- checks file extension
-- validates against allowed types
+### content validation
+servers must validate:
+- actual format matches declared mime type
+- size within limits
+- no malicious payloads (script injection, etc)
 
-### file validation
-upload will fail if:
-- file doesn't exist
-- file exceeds size limits
-- mime type not allowed
-- you're not authenticated
+### access control
+blob references in public records make blobs public. for private content:
+- store in private records
+- access requires auth
+- pds enforces permissions
 
-## troubleshooting
-
-### "file not found"
-```bash
-pdsx upload-blob photo.jpg
-# error: file not found: photo.jpg
+### immutability guarantees
+cids provide tamper-evidence:
+```
+record says: image is bafkrei123...
+fetch bafkrei123... → hash content → verify matches cid
 ```
 
-check:
-- file path is correct
-- file exists: `ls photo.jpg`
-- use absolute path if needed: `pdsx upload-blob /full/path/to/photo.jpg`
+if hash doesn't match, content was tampered with.
 
-### "not authenticated"
-blob upload requires authentication:
+## atproto-specific details
 
-```bash
-export ATPROTO_HANDLE=your.handle
-export ATPROTO_PASSWORD=your-password
-pdsx upload-blob photo.jpg
-```
+### blob sync protocol
+atproto defines blob sync alongside record sync:
+- `com.atproto.sync.getBlob` - fetch by cid
+- `com.atproto.sync.listBlobs` - list repo's blobs
+- supports federated backup/migration
 
-### "blob too large"
-```bash
-pdsx upload-blob huge.mp4
-# error: blob exceeds size limit
-```
+### lexicon integration
+lexicons define which record types can contain blobs:
+- `app.bsky.embed.images` - post images
+- `app.bsky.actor.profile` - avatar/banner
+- `app.bsky.embed.video` - video embeds (future)
 
-solutions:
-- compress the file
-- resize images: `convert huge.jpg -resize 1920x1920\> smaller.jpg`
-- use video compression: `ffmpeg -i huge.mp4 -crf 28 smaller.mp4`
-- check your pds's specific limits
+### repo commits
+blob references are part of repo state:
+- included in merkle trees
+- verified on sync
+- part of cryptographic audit trail
 
-### temporary blob expired
-if you wait too long between upload and using the blob:
+## design philosophy
 
-```bash
-pdsx upload-blob photo.jpg
-# cid: bafkreiabc123...
+blob handling reflects atproto's principles:
 
-# wait 2 hours
+**1. content addressing over location**: data identified by what it is, not where it is
 
-# try to use in record
-# error: blob not found (garbage collected)
-```
+**2. immutability**: guarantees about data integrity
 
-solution: re-upload the blob
+**3. federation-friendly**: each pds manages own storage, no shared dependencies
 
-## limitations & future work
+**4. spam prevention**: temporary storage + garbage collection
 
-current limitations:
-- no progress bar for large uploads
-- no batch upload command
-- no built-in retry logic
-- manual construction of embed structures
+**5. user sovereignty**: users can migrate blobs with their repositories
 
-planned improvements:
-- `pdsx create-post --images photo.jpg` (high-level helpers)
-- progress indicators for uploads
-- batch upload: `pdsx upload-blob *.jpg`
-- blob listing/management commands
+## further reading
 
-## see also
-
+- [content addressing](https://en.wikipedia.org/wiki/Content-addressable_storage)
+- [cid specification](https://github.com/multiformats/cid)
 - [atproto blob spec](https://atproto.com/specs/blob)
-- [lexicon: app.bsky.embed.images](https://atproto.com/lexicons/app-bsky-embed)
-- [content identifiers (cid)](https://github.com/multiformats/cid)
+- [multihash](https://multiformats.io/multihash/)
