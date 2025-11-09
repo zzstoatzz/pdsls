@@ -1,6 +1,7 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "name": "pdsx",
+  "favicon": "/assets/favicon.svg",
   "colors": {
     "dark": "#0D9373",
     "light": "#07C983",
