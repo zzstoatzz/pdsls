@@ -24,9 +24,12 @@ class Settings(BaseSettings):
         case_sensitive=False,
     )
 
-    atproto_pds_url: str = Field(default="https://bsky.social")
-    atproto_handle: str = Field(default="")
-    atproto_password: str = Field(default="")
+    atproto_pds_url: str = Field(
+        default="https://bsky.social",
+        description="PDS URL (only used for unauthenticated reads with -r flag)",
+    )
+    atproto_handle: str = Field(default="", description="Your atproto handle")
+    atproto_password: str = Field(default="", description="Your atproto app password")
 
 
 settings = Settings()
