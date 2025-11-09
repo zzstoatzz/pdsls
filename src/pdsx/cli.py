@@ -166,7 +166,7 @@ note: -r flag goes BEFORE the command (ls, get, etc.)
     )
     parser.add_argument(
         "--pds",
-        help="custom PDS URL (default: https://bsky.social)",
+        help="custom PDS URL (auto-discovered from handle if not specified)",
     )
 
     subparsers = parser.add_subparsers(dest="command", help="command")
@@ -235,8 +235,6 @@ note: -r flag goes BEFORE the command (ls, get, etc.)
         settings.atproto_pds_url = args.pds
 
     try:
-        client = AsyncClient(base_url=settings.atproto_pds_url)
-
         # determine if auth is needed
         # reads with --repo don't need auth, writes always need auth
         read_commands = ("list", "ls", "get", "cat")
@@ -246,9 +244,15 @@ note: -r flag goes BEFORE the command (ls, get, etc.)
         # auth required if: doing a write operation OR doing a read without --repo
         auth_needed = not is_read or not has_repo_target
 
-        # only attempt login if auth is actually needed
-        # this prevents switching PDS when reading from other repos
+        # create client with or without base_url depending on auth
         if auth_needed:
+            # for authenticated operations, let SDK discover PDS from handle
+            # unless user explicitly provided --pds flag
+            if args.pds:
+                client = AsyncClient(base_url=args.pds)
+            else:
+                client = AsyncClient()  # will discover PDS during login
+
             await login(
                 client,
                 args.handle or settings.atproto_handle,
@@ -256,6 +260,9 @@ note: -r flag goes BEFORE the command (ls, get, etc.)
                 silent=True,
                 required=True,
             )
+        else:
+            # for unauthenticated reads with -r, use default or provided PDS
+            client = AsyncClient(base_url=settings.atproto_pds_url)
 
         if args.command in ("list", "ls"):
             output_fmt = OutputFormat(args.output) if args.output else None
