@@ -52,8 +52,14 @@ async def cmd_list(
     display_records(collection, response.records, output_format=fmt)
 
     # display cursor if there are more pages
+    # for structured output formats (json/yaml), send to stderr to avoid breaking parsing
     if response.cursor:
-        console.print(f"\n[dim]next page cursor:[/dim] {response.cursor}")
+        structured_formats = (OutputFormat.JSON, OutputFormat.YAML)
+        if fmt in structured_formats:
+            # use stderr for structured formats to avoid breaking json/yaml parsing
+            print(f"\nnext page cursor: {response.cursor}", file=sys.stderr)
+        else:
+            console.print(f"\n[dim]next page cursor:[/dim] {response.cursor}")
 
 
 async def cmd_get(client: AsyncClient, uri: str) -> None:

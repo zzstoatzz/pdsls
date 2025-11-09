@@ -1,0 +1,238 @@
+---
+title: "Quick Start"
+description: "get up and running with pdsx in 5 minutes"
+---
+
+# quick start
+
+## installation
+
+```bash
+# use with uvx (no install)
+uvx pdsx --help
+
+# or install with uv
+uv add pdsx
+
+# or install with pip
+pip install pdsx
+```
+
+## reading records (no auth)
+
+read anyone's public records without authentication:
+
+```bash
+# list someone's posts
+pdsx -r jlowin.dev ls app.bsky.feed.post --limit 5
+
+# get their profile
+pdsx -r jlowin.dev get app.bsky.actor.profile/self
+
+# use json output with jq
+pdsx -r jlowin.dev ls app.bsky.feed.post -o json | jq -r '.[] | .text'
+```
+
+**tip**: `-r` is the repo flag - it can be a handle or did
+
+## writing records (auth required)
+
+set up authentication:
+
+```bash
+export ATPROTO_HANDLE=your.handle
+export ATPROTO_PASSWORD=your-password
+```
+
+or use .env file:
+```bash
+# .env
+ATPROTO_HANDLE=your.handle
+ATPROTO_PASSWORD=your-password
+```
+
+now you can create, update, and delete:
+
+```bash
+# update your bio
+pdsx edit app.bsky.actor.profile/self description='new bio here'
+
+# create a post
+pdsx create app.bsky.feed.post text='hello from pdsx!'
+
+# delete a post (use the rkey from create output)
+pdsx rm app.bsky.feed.post/3m4ryxwq5dt2i
+```
+
+## common workflows
+
+### exploring a user's content
+
+```bash
+# get their bio
+pdsx -r user.handle ls app.bsky.actor.profile -o json | jq -r '.[0].description'
+
+# list recent posts
+pdsx -r user.handle ls app.bsky.feed.post --limit 20
+
+# export all post text
+pdsx -r user.handle ls app.bsky.feed.post -o json | jq -r '.[] | .text' > posts.txt
+```
+
+### working with pagination
+
+```bash
+# get first page
+pdsx -r user.handle ls app.bsky.feed.post --limit 50
+
+# cursor appears on stderr
+# next page cursor: 3lyqmkpiprs2w
+
+# get next page
+pdsx -r user.handle ls app.bsky.feed.post --limit 50 --cursor 3lyqmkpiprs2w
+```
+
+### uploading images
+
+```bash
+# upload an image
+pdsx upload-blob photo.jpg
+
+# output includes blob reference:
+# {
+#   "$type": "blob",
+#   "ref": {"$link": "bafkreif..."},
+#   "mimeType": "image/jpeg",
+#   "size": 49004
+# }
+
+# use this blob reference in your records
+# (programmatically - pdsx doesn't have high-level post-with-image yet)
+```
+
+## output formats
+
+pdsx supports multiple output formats:
+
+```bash
+# compact (default) - human readable
+pdsx ls app.bsky.feed.post
+
+# json - for piping to jq
+pdsx ls app.bsky.feed.post -o json
+
+# yaml - for readability
+pdsx ls app.bsky.feed.post -o yaml
+
+# table - structured view
+pdsx ls app.bsky.feed.post -o table
+```
+
+## unix-style aliases
+
+pdsx uses familiar unix commands:
+
+| operation | full command | alias |
+|-----------|-------------|-------|
+| list | `pdsx list` | `pdsx ls` |
+| get | `pdsx get` | `pdsx cat` |
+| create | `pdsx create` | `pdsx touch`, `pdsx add` |
+| update | `pdsx update` | `pdsx edit` |
+| delete | `pdsx delete` | `pdsx rm` |
+
+## shorthand uris
+
+when authenticated, use shorthand uris:
+
+```bash
+# instead of full uri:
+pdsx get at://did:plc:your-did/app.bsky.feed.post/abc123
+
+# use shorthand:
+pdsx get app.bsky.feed.post/abc123
+
+# also works for update/delete:
+pdsx edit app.bsky.feed.post/abc123 text='updated'
+pdsx rm app.bsky.feed.post/abc123
+```
+
+## common collections
+
+here are the most useful collections:
+
+```bash
+# posts
+app.bsky.feed.post
+
+# profile
+app.bsky.actor.profile
+
+# likes
+app.bsky.feed.like
+
+# follows
+app.bsky.graph.follow
+
+# reposts
+app.bsky.feed.repost
+
+# lists
+app.bsky.graph.list
+```
+
+## next steps
+
+explore the concept guides:
+- [records](../concepts/records.mdx) - deep dive into atproto records
+- [pagination](../concepts/pagination.mdx) - working with large collections
+- [blobs](../concepts/blobs.mdx) - uploading images and files
+
+## getting help
+
+```bash
+# general help
+pdsx --help
+
+# command-specific help
+pdsx ls --help
+pdsx create --help
+pdsx upload-blob --help
+```
+
+## troubleshooting
+
+### "not authenticated"
+```bash
+# set credentials
+export ATPROTO_HANDLE=your.handle
+export ATPROTO_PASSWORD=your-password
+
+# or use flags
+pdsx --handle your.handle --password your-password edit ...
+```
+
+### "no repo specified and not authenticated"
+```bash
+# for reads, use --repo flag
+pdsx -r user.handle ls app.bsky.feed.post
+
+# for writes, authenticate first
+export ATPROTO_HANDLE=your.handle
+export ATPROTO_PASSWORD=your-password
+```
+
+### "invalid uri format"
+```bash
+# use full at-uri or shorthand
+pdsx get at://did:plc:.../app.bsky.feed.post/abc123  # full
+pdsx get app.bsky.feed.post/abc123  # shorthand (when auth'd)
+
+# not just the rkey
+pdsx get abc123  # wrong!
+```
+
+## resources
+
+- [github repo](https://github.com/zzstoatzz/pdsx)
+- [atproto documentation](https://atproto.com)
+- [bluesky documentation](https://docs.bsky.app)

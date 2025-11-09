@@ -1,0 +1,205 @@
+---
+title: "Pagination"
+description: "efficiently work with large collections using cursor-based pagination"
+---
+
+# pagination
+
+atproto uses **cursor-based pagination** to handle large collections efficiently. instead of traditional page numbers, you receive an opaque cursor token that marks your position in the result set.
+
+## how it works
+
+when listing records, the api returns:
+1. a batch of records (up to your `--limit`)
+2. an optional `cursor` value if more results exist
+
+think of the cursor as a bookmark - it tells the server "start from here next time."
+
+## basic usage
+
+### get the first page
+
+```bash
+pdsx -r jlowin.dev ls app.bsky.feed.post --limit 10
+```
+
+output:
+```
+app.bsky.feed.post (10 records)
+3m53p7qp7e22v: {...}
+3lyquoigrej2a: {...}
+# ... more records
+
+next page cursor: 3lyqmkpiprs2w
+```
+
+### get the next page
+
+copy the cursor and pass it to `--cursor`:
+
+```bash
+pdsx -r jlowin.dev ls app.bsky.feed.post --limit 10 --cursor 3lyqmkpiprs2w
+```
+
+this returns the next 10 records starting after the cursor position.
+
+## cursor behavior
+
+### opaque tokens
+cursors are implementation details - don't try to parse or modify them. they might be:
+- record keys (rkeys)
+- timestamps
+- encoded positions
+- something else entirely
+
+treat them as black boxes.
+
+### cursor lifetime
+cursors are typically short-lived:
+- valid for minutes to hours
+- may expire if collection changes significantly
+- no guarantees about long-term validity
+
+**best practice**: use cursors immediately, don't store for later.
+
+### end of results
+when you reach the end:
+```
+app.bsky.feed.post (3 records)
+# ... records ...
+
+# no cursor displayed = you've reached the end
+```
+
+## structured output formats
+
+when using json or yaml output, the cursor goes to **stderr** instead of stdout:
+
+```bash
+# json parsing works correctly
+pdsx -r user.bsky.social ls app.bsky.feed.post --limit 50 -o json | jq '.[] | .text'
+
+# cursor appears on stderr (visible but doesn't break json)
+```
+
+this prevents the cursor from breaking json/yaml parsers while still showing you the pagination info.
+
+## patterns & workflows
+
+### processing all pages (bash)
+
+```bash
+#!/bin/bash
+collection="app.bsky.feed.post"
+cursor=""
+
+while true; do
+    if [ -z "$cursor" ]; then
+        # first page
+        output=$(pdsx -r user.bsky.social ls "$collection" --limit 100 -o json 2>&1)
+    else
+        # subsequent pages
+        output=$(pdsx -r user.bsky.social ls "$collection" --limit 100 --cursor "$cursor" -o json 2>&1)
+    fi
+
+    # extract records (stdout) and cursor (stderr)
+    echo "$output" | grep -v "next page cursor" | jq -r '.[] | .text'
+
+    # check for next cursor
+    cursor=$(echo "$output" | grep "next page cursor" | awk '{print $NF}')
+    [ -z "$cursor" ] && break
+done
+```
+
+### processing with python
+
+```python
+import subprocess
+import json
+
+def fetch_all_records(repo: str, collection: str, limit: int = 100):
+    cursor = None
+    all_records = []
+
+    while True:
+        cmd = ["pdsx", "-r", repo, "ls", collection, "--limit", str(limit), "-o", "json"]
+        if cursor:
+            cmd.extend(["--cursor", cursor])
+
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        records = json.loads(result.stdout)
+        all_records.extend(records)
+
+        # check stderr for cursor
+        if "next page cursor:" in result.stderr:
+            cursor = result.stderr.split("next page cursor:")[-1].strip()
+        else:
+            break
+
+    return all_records
+
+# usage
+posts = fetch_all_records("jlowin.dev", "app.bsky.feed.post")
+print(f"fetched {len(posts)} total posts")
+```
+
+## performance considerations
+
+### limit size
+- smaller limits (10-50): more requests, but faster per-request
+- larger limits (100): fewer requests, but slower per-request
+- api maximum is typically 100
+
+**recommendation**: use 50-100 for batch processing, 10-25 for interactive use
+
+### rate limits
+fetching all pages can hit rate limits quickly:
+- most endpoints: 3000 requests per 5 minutes
+- createSession: 30 per 5 minutes
+
+**best practice**: add delays between requests if fetching many pages
+
+## common pitfalls
+
+### don't reconstruct cursors
+❌ **wrong**:
+```bash
+# don't try to guess cursors based on record keys
+pdsx ls collection --cursor $last_rkey
+```
+
+✅ **correct**:
+```bash
+# use the cursor from the response
+cursor=$(pdsx ls collection --limit 10 2>&1 | grep "next page cursor" | awk '{print $NF}')
+pdsx ls collection --cursor "$cursor"
+```
+
+### cursors aren't page numbers
+cursors are not sequential or predictable:
+- you can't "go to page 5"
+- you can't jump backwards (usually)
+- you must follow the chain: page 1 → page 2 → page 3
+
+### mixing parameters
+when paginating, **keep all other parameters constant**:
+
+❌ **wrong**:
+```bash
+pdsx ls collection --limit 50          # first page
+pdsx ls collection --limit 100 --cursor <cursor>  # changed limit!
+```
+
+✅ **correct**:
+```bash
+pdsx ls collection --limit 50          # first page
+pdsx ls collection --limit 50 --cursor <cursor>   # same limit
+```
+
+## future improvements
+
+see [pagination_issues.md](../repros/pagination_issues.md) for planned enhancements:
+- `--all` flag for automatic pagination
+- better cursor display/copying
+- progress indicators
+- reverse pagination support

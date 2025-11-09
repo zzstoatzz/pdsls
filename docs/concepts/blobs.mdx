@@ -1,0 +1,242 @@
+---
+title: "Blob Upload"
+description: "upload and manage binary content like images and videos"
+---
+
+# blob upload
+
+blobs are binary large objects - images, videos, audio files, and other non-text content in atproto. before you can reference a blob in a record (like a post with an image), you must first upload it.
+
+## upload workflow
+
+### 1. upload the blob
+
+```bash
+pdsx upload-blob ./photo.jpg
+```
+
+output:
+```
+✓ blob uploaded successfully
+
+blob reference:
+{
+  "$type": "blob",
+  "ref": {"$link": "bafkreif4oxjpqppiy6qvxpmgk7dv2sgxh6kanc5e5aztvgqvqho2q34c5u"},
+  "mimeType": "image/jpeg",
+  "size": 49004
+}
+
+use this blob reference in records (e.g., for post embeds)
+```
+
+### 2. use in a record
+
+the blob reference can be used in any record that accepts blobs:
+
+```bash
+# example: create a post with an image (simplified - actual embed structure is more complex)
+# you would typically construct the full embed structure programmatically
+```
+
+## blob reference structure
+
+```json
+{
+  "$type": "blob",
+  "ref": {
+    "$link": "bafkreif..."  // cid (content identifier)
+  },
+  "mimeType": "image/jpeg",  // detected mime type
+  "size": 49004              // bytes
+}
+```
+
+### cid (content identifier)
+- unique hash of the content
+- starts with `bafkrei...` or `bafybei...`
+- content-addressed: same file = same cid
+- immutable: can't change blob content
+
+### mime type
+automatically detected from file:
+- images: `image/jpeg`, `image/png`, `image/gif`, `image/webp`
+- video: `video/mp4`, `video/webm`
+- others: varies by pds
+
+### size limits
+varies by pds and blob type:
+- images: typically 1mb limit
+- videos: varies widely (can be 50mb+ on some instances)
+
+check your pds documentation for specific limits.
+
+## blob lifecycle
+
+### temporary storage
+after upload, blobs enter **temporary storage**:
+- stored for ~1 hour
+- not yet accessible via url
+- will be garbage collected if not referenced
+
+### permanent storage
+blobs become permanent when:
+1. you create/update a record that references the blob
+2. the pds moves the blob to permanent storage
+3. the blob becomes accessible via cdn/url
+
+example:
+```bash
+# upload blob
+pdsx upload-blob photo.jpg
+# returns blob ref with cid: bafkreif...
+
+# blob is temporary (1 hour ttl)
+
+# use in record (your application code)
+# creates post with image embed using the blob ref
+
+# blob is now permanent
+```
+
+### deletion
+blobs are deleted when:
+- no records reference them (garbage collected)
+- the record referencing them is deleted
+- you explicitly delete them (advanced usage)
+
+## common use cases
+
+### profile pictures
+
+```bash
+# upload avatar
+pdsx upload-blob avatar.jpg
+# copy blob reference
+
+# update profile with avatar blob ref
+# (programmatic - pdsx doesn't have high-level profile update yet)
+```
+
+### post images
+
+```bash
+# upload image
+blob_ref=$(pdsx upload-blob vacation.jpg -o json | jq -r '.ref["$link"]')
+
+# use in post embed
+# (requires constructing proper app.bsky.embed.images structure)
+```
+
+### multiple images
+
+```bash
+# upload multiple images
+pdsx upload-blob image1.jpg > blob1.json
+pdsx upload-blob image2.jpg > blob2.json
+pdsx upload-blob image3.jpg > blob3.json
+
+# combine into images array for post
+# (max 4 images per post on bluesky)
+```
+
+## advanced topics
+
+### content addressing
+same file = same cid:
+
+```bash
+pdsx upload-blob cat.jpg
+# cid: bafkreiabc123...
+
+# upload same file again
+pdsx upload-blob cat.jpg
+# cid: bafkreiabc123...  (identical)
+```
+
+this means:
+- duplicate uploads are idempotent
+- same content can be referenced by multiple records
+- efficient storage deduplication
+
+### mime type detection
+pdsx uses the atproto library's mime detection, which:
+- reads file magic bytes
+- checks file extension
+- validates against allowed types
+
+### file validation
+upload will fail if:
+- file doesn't exist
+- file exceeds size limits
+- mime type not allowed
+- you're not authenticated
+
+## troubleshooting
+
+### "file not found"
+```bash
+pdsx upload-blob photo.jpg
+# error: file not found: photo.jpg
+```
+
+check:
+- file path is correct
+- file exists: `ls photo.jpg`
+- use absolute path if needed: `pdsx upload-blob /full/path/to/photo.jpg`
+
+### "not authenticated"
+blob upload requires authentication:
+
+```bash
+export ATPROTO_HANDLE=your.handle
+export ATPROTO_PASSWORD=your-password
+pdsx upload-blob photo.jpg
+```
+
+### "blob too large"
+```bash
+pdsx upload-blob huge.mp4
+# error: blob exceeds size limit
+```
+
+solutions:
+- compress the file
+- resize images: `convert huge.jpg -resize 1920x1920\> smaller.jpg`
+- use video compression: `ffmpeg -i huge.mp4 -crf 28 smaller.mp4`
+- check your pds's specific limits
+
+### temporary blob expired
+if you wait too long between upload and using the blob:
+
+```bash
+pdsx upload-blob photo.jpg
+# cid: bafkreiabc123...
+
+# wait 2 hours
+
+# try to use in record
+# error: blob not found (garbage collected)
+```
+
+solution: re-upload the blob
+
+## limitations & future work
+
+current limitations:
+- no progress bar for large uploads
+- no batch upload command
+- no built-in retry logic
+- manual construction of embed structures
+
+planned improvements:
+- `pdsx create-post --images photo.jpg` (high-level helpers)
+- progress indicators for uploads
+- batch upload: `pdsx upload-blob *.jpg`
+- blob listing/management commands
+
+## see also
+
+- [atproto blob spec](https://atproto.com/specs/blob)
+- [lexicon: app.bsky.embed.images](https://atproto.com/lexicons/app-bsky-embed)
+- [content identifiers (cid)](https://github.com/multiformats/cid)
