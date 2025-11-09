@@ -248,10 +248,7 @@ note: -r flag goes BEFORE the command (ls, get, etc.)
         if auth_needed:
             # for authenticated operations, let SDK discover PDS from handle
             # unless user explicitly provided --pds flag
-            if args.pds:
-                client = AsyncClient(base_url=args.pds)
-            else:
-                client = AsyncClient()  # will discover PDS during login
+            client = AsyncClient(base_url=args.pds) if args.pds else AsyncClient()
 
             await login(
                 client,
