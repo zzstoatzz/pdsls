@@ -29,8 +29,10 @@ supports JSON for complex values (objects/arrays).
 
 **Examples:**
 
+```python
 >>> parse_key_value_args(["name=test", "count=5", "active=true"])
 {'name': 'test', 'count': 5, 'active': True}
 >>> parse_key_value_args(['embed={"$type":"blob"}'])
 {'embed': {'$type': 'blob'}}
+```
 
