@@ -63,22 +63,17 @@ pdsx -r zzstoatzz.io ls app.bsky.feed.post --limit 10
 pdsx -r zzstoatzz.io ls app.bsky.feed.post --limit 10 --cursor 3lyqmkpiprs2w
 ```
 
-### blob upload (auth required)
+### post with image (end-to-end)
 
 ```bash
-# upload an image
-pdsx upload-blob ./photo.jpg
+# 1. upload image and capture blob reference
+pdsx upload-blob photo.jpg
+# outputs: {"$type":"blob","ref":{"$link":"bafkreif..."},"mimeType":"image/jpeg","size":6344}
 
-# returns blob reference like:
-# {
-#   "$type": "blob",
-#   "ref": {"$link": "bafkreif..."},
-#   "mimeType": "image/jpeg",
-#   "size": 123456
-# }
-
-# use blob reference in records (e.g., create post with image)
-# copy the blob reference output and use it in your record creation
+# 2. create post with uploaded image
+pdsx create app.bsky.feed.post \
+  text='check out this photo!' \
+  'embed={"$type":"app.bsky.embed.images","images":[{"alt":"my photo","image":{"$type":"blob","ref":{"$link":"bafkreif..."},"mimeType":"image/jpeg","size":6344}}]}'
 ```
 
 ### write operations (auth required)
