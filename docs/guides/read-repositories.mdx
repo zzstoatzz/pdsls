@@ -47,7 +47,7 @@ pdsx -r zzstoatzz.io ls app.bsky.feed.post --limit 10
 pdsx -r zzstoatzz.io ls app.bsky.feed.post --limit 10 --cursor 3lyqmkpiprs2w
 ```
 
-cursors are opaque tokens. for json/yaml output, they go to stderr.
+cursors are opaque tokens. for json/yaml output, they go to stderr to avoid breaking parsing. for compact/table output, they appear after results. both humans and LLMs can copy the cursor value for the next command.
 
 ## output formats
 
