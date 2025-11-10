@@ -101,7 +101,9 @@ pdsx create app.bsky.feed.like subject='at://...' createdAt='2024-01-01T00:00:00
 <details>
 <summary>output formats</summary>
 
-### compact (default)
+both `ls` and `cat`/`get` support four output formats:
+
+### compact (default for ls)
 ```
 app.bsky.feed.post (3 records)
 3m4ryxwq5dt2i: {"created_at":"2025-11-04T07:25:17.061883+00:00","text":"..."}
@@ -110,11 +112,19 @@ app.bsky.feed.post (3 records)
 ### json
 ```bash
 pdsx ls app.bsky.feed.post -o json | jq '.[].text'
+pdsx cat app.bsky.feed.post/3m4ryxwq5dt2i -o json
 ```
 
-### table
+### yaml
+```bash
+pdsx ls app.bsky.feed.post -o yaml
+pdsx cat app.bsky.actor.profile/self -o yaml
+```
+
+### table (default for cat/get)
 ```bash
 pdsx ls app.bsky.feed.post -o table
+pdsx cat app.bsky.actor.profile/self  # default
 ```
 
 </details>

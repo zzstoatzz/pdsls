@@ -79,6 +79,23 @@ pdsx -r user.handle ls app.bsky.feed.post --limit 20
 pdsx -r user.handle ls app.bsky.feed.post -o json | jq -r '.[] | .text' > posts.txt
 ```
 
+### output formats
+
+both `ls` and `cat`/`get` support multiple output formats:
+
+```bash
+# list in different formats
+pdsx -r user.handle ls app.bsky.feed.post -o json    # json array
+pdsx -r user.handle ls app.bsky.feed.post -o yaml    # yaml
+pdsx -r user.handle ls app.bsky.feed.post -o compact # one-line json
+pdsx -r user.handle ls app.bsky.feed.post -o table   # rich table (default)
+
+# get single record in different formats
+pdsx -r user.handle cat app.bsky.actor.profile/self -o json
+pdsx -r user.handle cat app.bsky.actor.profile/self -o yaml
+pdsx -r user.handle cat app.bsky.actor.profile/self -o table  # default
+```
+
 ### working with pagination
 
 ```bash
@@ -182,10 +199,10 @@ app.bsky.graph.list
 
 ## next steps
 
-explore the concept guides:
-- [records](../concepts/records.mdx) - deep dive into atproto records
-- [pagination](../concepts/pagination.mdx) - working with large collections
-- [blobs](../concepts/blobs.mdx) - uploading images and files
+explore the guides:
+- [records and collections](/concepts/records-and-collections) - deep dive into atproto records and pagination
+- [blob upload](/guides/blob-upload) - uploading images and files
+- [CRUD safety](/guides/crud-safety) - best practices for write operations
 
 ## getting help
 
