@@ -23,10 +23,12 @@ def parse_key_value_args(args: list[str]) -> dict[str, Any]:
         parsed dictionary
 
     Examples:
+        ```python
         >>> parse_key_value_args(["name=test", "count=5", "active=true"])
         {'name': 'test', 'count': 5, 'active': True}
         >>> parse_key_value_args(['embed={"$type":"blob"}'])
         {'embed': {'$type': 'blob'}}
+        ```
     """
     result: dict[str, Any] = {}
     for arg in args:
