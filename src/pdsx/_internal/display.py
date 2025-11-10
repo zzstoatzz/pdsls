@@ -138,12 +138,48 @@ def display_records(
     console.print(table)
 
 
-def display_record(response: models.ComAtprotoRepoGetRecord.Response) -> None:
-    """display a single record in a panel.
+def display_record(
+    response: models.ComAtprotoRepoGetRecord.Response,
+    *,
+    output_format: OutputFormat = OutputFormat.TABLE,
+) -> None:
+    """display a single record.
 
     Args:
         response: atproto record response
+        output_format: output format enum (default: table with panel)
     """
+    rkey = response.uri.split("/")[-1]
+    value_dict = _value_to_dict(response.value)
+
+    # json output
+    if output_format == OutputFormat.JSON:
+        output = {
+            "rkey": rkey,
+            "uri": response.uri,
+            "cid": response.cid,
+            **value_dict,
+        }
+        print(json.dumps(output, indent=2))
+        return
+
+    # yaml output
+    if output_format == OutputFormat.YAML:
+        output = {
+            "rkey": rkey,
+            "uri": response.uri,
+            "cid": response.cid,
+            **value_dict,
+        }
+        print(yaml.dump(output, default_flow_style=False, sort_keys=False))
+        return
+
+    # compact output
+    if output_format == OutputFormat.COMPACT:
+        print(f"{rkey}: {json.dumps(value_dict, separators=(',', ':'))}")
+        return
+
+    # table output (default) - rich panel with table
     table = Table(show_header=False, box=None)
     table.add_column("key", style="cyan")
     table.add_column("value", style="white")
@@ -151,7 +187,6 @@ def display_record(response: models.ComAtprotoRepoGetRecord.Response) -> None:
     table.add_row("uri", response.uri)
     table.add_row("cid", response.cid)
 
-    value_dict = _value_to_dict(response.value)
     for key, val in value_dict.items():
         if key not in ("$type", "py_type"):
             table.add_row(key, str(val))

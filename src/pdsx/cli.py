@@ -63,10 +63,13 @@ async def cmd_list(
             console.print(f"\n[dim]next page cursor:[/dim] {response.cursor}")
 
 
-async def cmd_get(client: AsyncClient, uri: str) -> None:
+async def cmd_get(
+    client: AsyncClient, uri: str, output_format: OutputFormat | None = None
+) -> None:
     """get a specific record."""
     response = await get_record(client, uri)
-    display_record(response)
+    fmt = output_format or OutputFormat.TABLE
+    display_record(response, output_format=fmt)
 
 
 async def cmd_create(
@@ -192,6 +195,12 @@ note: -r flag goes BEFORE the command (ls, get, etc.)
     # get (cat alias)
     get_parser = subparsers.add_parser("get", aliases=["cat"], help="get record")
     get_parser.add_argument("uri", help="record AT-URI")
+    get_parser.add_argument(
+        "-o",
+        "--output",
+        choices=["json", "yaml", "table", "compact"],
+        help="output format (default: table)",
+    )
 
     # create (touch/add aliases)
     create_parser = subparsers.add_parser(
@@ -277,7 +286,10 @@ note: -r flag goes BEFORE the command (ls, get, etc.)
             )
 
         elif args.command in ("get", "cat"):
-            await cmd_get(client, args.uri)
+            output_fmt = (
+                OutputFormat[args.output.upper()] if args.output else OutputFormat.TABLE
+            )
+            await cmd_get(client, args.uri, output_format=output_fmt)
 
         elif args.command in ("create", "touch", "add"):
             record = parse_key_value_args(args.fields)
