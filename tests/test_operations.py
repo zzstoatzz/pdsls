@@ -7,7 +7,12 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 from atproto import AsyncClient, models
 
-from pdsx._internal.operations import delete_record, list_records, update_record
+from pdsx._internal.operations import (
+    delete_record,
+    get_record,
+    list_records,
+    update_record,
+)
 
 
 @pytest.fixture
@@ -25,6 +30,72 @@ def mock_client_no_auth() -> AsyncClient:
     client = MagicMock()
     client.me = None
     return client
+
+
+class TestGetRecord:
+    """tests for get_record function."""
+
+    async def test_full_uri_format(self, mock_client: AsyncClient) -> None:
+        """test get with full at:// URI format."""
+        mock_client.com.atproto.repo.get_record = AsyncMock(  # type: ignore[attr-defined]
+            return_value=models.ComAtprotoRepoGetRecord.Response(
+                uri="at://did:plc:test123/app.bsky.actor.profile/self",
+                cid="testcid",
+                value={"description": "my bio"},
+            )
+        )
+
+        result = await get_record(
+            mock_client,
+            "at://did:plc:test123/app.bsky.actor.profile/self",
+        )
+
+        assert result.uri == "at://did:plc:test123/app.bsky.actor.profile/self"
+        mock_client.com.atproto.repo.get_record.assert_called_once()
+        call_args = mock_client.com.atproto.repo.get_record.call_args[0][0]
+        assert call_args["repo"] == "did:plc:test123"
+        assert call_args["collection"] == "app.bsky.actor.profile"
+        assert call_args["rkey"] == "self"
+
+    async def test_shorthand_uri_format(self, mock_client: AsyncClient) -> None:
+        """test get with shorthand URI format (collection/rkey)."""
+        mock_client.com.atproto.repo.get_record = AsyncMock(  # type: ignore[attr-defined]
+            return_value=models.ComAtprotoRepoGetRecord.Response(
+                uri="at://did:plc:test123/app.bsky.actor.profile/self",
+                cid="testcid",
+                value={"description": "my bio"},
+            )
+        )
+
+        await get_record(
+            mock_client,
+            "app.bsky.actor.profile/self",
+        )
+
+        # verify it used client.me.did
+        mock_client.com.atproto.repo.get_record.assert_called_once()
+        call_args = mock_client.com.atproto.repo.get_record.call_args[0][0]
+        assert call_args["repo"] == "did:plc:test123"
+        assert call_args["collection"] == "app.bsky.actor.profile"
+        assert call_args["rkey"] == "self"
+
+    async def test_shorthand_uri_without_auth_fails(
+        self, mock_client_no_auth: AsyncClient
+    ) -> None:
+        """test shorthand URI fails without authentication."""
+        with pytest.raises(ValueError, match="shorthand URI requires authentication"):
+            await get_record(
+                mock_client_no_auth,
+                "app.bsky.actor.profile/self",
+            )
+
+    async def test_invalid_uri_format_fails(self, mock_client: AsyncClient) -> None:
+        """test invalid URI format raises error."""
+        with pytest.raises(ValueError, match="invalid URI format"):
+            await get_record(
+                mock_client,
+                "invalid",
+            )
 
 
 class TestUpdateRecord:

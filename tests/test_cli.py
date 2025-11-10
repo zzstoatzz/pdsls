@@ -3,6 +3,11 @@
 from __future__ import annotations
 
 import subprocess
+from unittest.mock import AsyncMock, MagicMock
+
+import pytest
+
+from pdsx.cli import discover_pds
 
 
 def test_version_flag_long() -> None:
@@ -31,3 +36,61 @@ def test_version_flag_short() -> None:
     assert result.returncode == 0
     output = result.stdout.strip()
     assert output.startswith("pdsx ")
+
+
+class TestDiscoverPds:
+    """tests for discover_pds function."""
+
+    @pytest.mark.parametrize(
+        "repo,expected_pds",
+        [
+            ("zzstoatzz.io", "https://pds.zzstoatzz.io"),
+            ("did:plc:xbtmt2zjwlrfegqvch7fboei", "https://pds.zzstoatzz.io"),
+        ],
+    )
+    async def test_discover_pds_from_handle_and_did(
+        self, repo: str, expected_pds: str, mocker
+    ) -> None:
+        """test PDS discovery from both handle and DID."""
+        # mock the resolver
+        mock_resolver = MagicMock()
+        mock_resolver.handle.resolve = AsyncMock(
+            return_value="did:plc:xbtmt2zjwlrfegqvch7fboei"
+        )
+
+        mock_atproto_data = MagicMock()
+        mock_atproto_data.pds = expected_pds
+        mock_resolver.did.resolve_atproto_data = AsyncMock(
+            return_value=mock_atproto_data
+        )
+
+        mocker.patch("pdsx.cli.AsyncIdResolver", return_value=mock_resolver)
+
+        result = await discover_pds(repo)
+        assert result == expected_pds
+
+    async def test_discover_pds_handle_resolution_fails(self, mocker) -> None:
+        """test that invalid handle raises error."""
+        mock_resolver = MagicMock()
+        mock_resolver.handle.resolve = AsyncMock(return_value=None)
+
+        mocker.patch("pdsx.cli.AsyncIdResolver", return_value=mock_resolver)
+
+        with pytest.raises(ValueError, match="could not resolve handle"):
+            await discover_pds("invalid.handle")
+
+    async def test_discover_pds_no_pds_found(self, mocker) -> None:
+        """test that DID without PDS raises error."""
+        mock_resolver = MagicMock()
+        mock_resolver.handle.resolve = AsyncMock(return_value="did:plc:test123")
+
+        mock_atproto_data = MagicMock()
+        mock_atproto_data.pds = None
+        mock_resolver.did.resolve_atproto_data = AsyncMock(
+            return_value=mock_atproto_data
+        )
+
+        mocker.patch("pdsx.cli.AsyncIdResolver", return_value=mock_resolver)
+
+        with pytest.raises(ValueError, match="could not find PDS"):
+            await discover_pds("test.handle")

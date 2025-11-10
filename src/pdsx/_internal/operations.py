@@ -61,16 +61,25 @@ async def get_record(
 
     Args:
         client: authenticated atproto client
-        uri: record AT-URI
+        uri: record AT-URI (can be shorthand like 'collection/rkey' if authenticated)
 
     Returns:
         record response
     """
-    parts = uri.replace("at://", "").split("/")
-    if len(parts) != 3:
-        raise ValueError(f"invalid URI format: {uri}")
+    # strip at:// prefix if present
+    uri_without_prefix = uri.replace("at://", "")
+    parts = uri_without_prefix.split("/")
 
-    repo, collection, rkey = parts
+    # if shorthand format (collection/rkey), use authenticated user's DID
+    if len(parts) == 2:
+        if not client.me:
+            raise ValueError("shorthand URI requires authentication")
+        repo = client.me.did
+        collection, rkey = parts
+    elif len(parts) == 3:
+        repo, collection, rkey = parts
+    else:
+        raise ValueError(f"invalid URI format: {uri}")
 
     return await client.com.atproto.repo.get_record(
         {
