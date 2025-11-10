@@ -57,17 +57,36 @@ async def list_records(
 async def get_record(
     client: AsyncClient,
     uri: str,
+    repo: str | None = None,
 ) -> models.ComAtprotoRepoGetRecord.Response:
     """get a specific record.
 
     Args:
         client: authenticated atproto client
-        uri: record AT-URI (can be shorthand like 'collection/rkey' if authenticated)
+        uri: record AT-URI (can be shorthand like 'collection/rkey' if authenticated or repo provided)
+        repo: repository DID/handle (enables shorthand URIs with -r flag)
 
     Returns:
         record response
     """
-    parts = URIParts.from_uri(uri, client.me.did if client.me else None)
+    # determine which DID to use for shorthand URIs
+    did_for_shorthand = None
+    if client.me:
+        did_for_shorthand = client.me.did
+    elif repo:
+        # resolve repo to DID if it's a handle
+        from atproto_identity.resolver import AsyncIdResolver
+
+        resolver = AsyncIdResolver()
+        if repo.startswith("did:"):
+            did_for_shorthand = repo
+        else:
+            resolved = await resolver.handle.resolve(repo)
+            if not resolved:
+                raise ValueError(f"could not resolve handle: {repo}")
+            did_for_shorthand = resolved
+
+    parts = URIParts.from_uri(uri, did_for_shorthand)
 
     return await client.com.atproto.repo.get_record(
         {

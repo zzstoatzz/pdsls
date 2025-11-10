@@ -64,10 +64,13 @@ async def cmd_list(
 
 
 async def cmd_get(
-    client: AsyncClient, uri: str, output_format: OutputFormat | None = None
+    client: AsyncClient,
+    uri: str,
+    output_format: OutputFormat | None = None,
+    repo: str | None = None,
 ) -> None:
     """get a specific record."""
-    response = await get_record(client, uri)
+    response = await get_record(client, uri, repo=repo)
     fmt = output_format or OutputFormat.TABLE
     display_record(response, output_format=fmt)
 
@@ -289,7 +292,7 @@ note: -r flag goes BEFORE the command (ls, get, etc.)
             output_fmt = (
                 OutputFormat[args.output.upper()] if args.output else OutputFormat.TABLE
             )
-            await cmd_get(client, args.uri, output_format=output_fmt)
+            await cmd_get(client, args.uri, output_format=output_fmt, repo=args.repo)
 
         elif args.command in ("create", "touch", "add"):
             record = parse_key_value_args(args.fields)

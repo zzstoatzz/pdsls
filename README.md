@@ -54,39 +54,43 @@ pdsx -r zzstoatzz.io ls app.bsky.actor.profile -o json | jq -r '.[0].description
 
 ```bash
 # get first page (note: -r before ls, --cursor after)
-pdsx -r zzstoatzz.io ls app.bsky.feed.post --limit 10
+pdsx -r zzstoatzz.io ls app.bsky.feed.post --limit 2
 
-# output includes cursor if more pages exist:
-# next page cursor: 3lyqmkpiprs2w
+# output includes cursor if more pages exist, copy it for next command
+# next page cursor: 3m5335qycpc2z
 
-# get next page
-pdsx -r zzstoatzz.io ls app.bsky.feed.post --limit 10 --cursor 3lyqmkpiprs2w
+# get next page (use actual cursor from previous output)
+pdsx -r zzstoatzz.io ls app.bsky.feed.post --limit 2 --cursor 3m5335qycpc2z
 ```
 
 ### post with image (end-to-end)
 
 ```bash
-# 1. upload image and capture blob reference
-pdsx upload-blob photo.jpg
-# outputs: {"$type":"blob","ref":{"$link":"bafkreif..."},"mimeType":"image/jpeg","size":6344}
+# download a test image
+curl -sL https://picsum.photos/200/200 -o /tmp/test.jpg
 
-# 2. create post with uploaded image
+# upload image and capture blob reference
+pdsx upload-blob /tmp/test.jpg
+# copy the blob reference from output, example:
+# {"$type":"blob","ref":{"$link":"bafkreif..."},"mimeType":"image/jpeg","size":6344}
+
+# create post with uploaded image (paste your actual blob reference)
 pdsx create app.bsky.feed.post \
-  text='check out this photo!' \
-  'embed={"$type":"app.bsky.embed.images","images":[{"alt":"my photo","image":{"$type":"blob","ref":{"$link":"bafkreif..."},"mimeType":"image/jpeg","size":6344}}]}'
+  text='Posted via pdsx!' \
+  'embed={"$type":"app.bsky.embed.images","images":[{"alt":"test image","image":{"$type":"blob","ref":{"$link":"PASTE_YOUR_CID_HERE"},"mimeType":"image/jpeg","size":6344}}]}'
 ```
 
 ### write operations (auth required)
 
 ```bash
-# update using shorthand URI
-pdsx edit app.bsky.actor.profile/self description='new bio'
+# update your bio
+pdsx edit app.bsky.actor.profile/self description='Building with pdsx!'
 
-# delete using shorthand URI
-pdsx rm app.bsky.feed.post/abc123
+# create a simple post
+pdsx create app.bsky.feed.post text='Hello from pdsx!'
 
-# create a record
-pdsx create app.bsky.feed.like subject='at://...' createdAt='2024-01-01T00:00:00Z'
+# delete a post (use the rkey from create output)
+pdsx rm app.bsky.feed.post/PASTE_RKEY_HERE
 ```
 
 **note**: when authenticated, use shorthand URIs (`collection/rkey`) instead of full AT-URIs (`at://did:plc:.../collection/rkey`)
@@ -106,20 +110,20 @@ app.bsky.feed.post (3 records)
 
 ### json
 ```bash
-pdsx ls app.bsky.feed.post -o json | jq '.[].text'
-pdsx cat app.bsky.feed.post/3m4ryxwq5dt2i -o json
+pdsx -r zzstoatzz.io ls app.bsky.feed.post -o json | jq '.[].text'
+pdsx -r zzstoatzz.io cat app.bsky.feed.post/3m5335qycpc2z -o json
 ```
 
 ### yaml
 ```bash
-pdsx ls app.bsky.feed.post -o yaml
-pdsx cat app.bsky.actor.profile/self -o yaml
+pdsx -r zzstoatzz.io ls app.bsky.feed.post --limit 3 -o yaml
+pdsx -r zzstoatzz.io cat app.bsky.actor.profile/self -o yaml
 ```
 
 ### table (default for cat/get)
 ```bash
-pdsx ls app.bsky.feed.post -o table
-pdsx cat app.bsky.actor.profile/self  # default
+pdsx -r zzstoatzz.io ls app.bsky.feed.post --limit 5 -o table
+pdsx -r zzstoatzz.io cat app.bsky.actor.profile/self  # default
 ```
 
 </details>
