@@ -60,7 +60,19 @@
           {
             "group": "SDK Reference",
             "pages": [
-              "python-sdk/pdsx-cli"
+              {
+                "group": "pdsx._internal",
+                "pages": [
+                  "python-sdk/pdsx-_internal-auth",
+                  "python-sdk/pdsx-_internal-config",
+                  "python-sdk/pdsx-_internal-display",
+                  "python-sdk/pdsx-_internal-operations",
+                  "python-sdk/pdsx-_internal-output",
+                  "python-sdk/pdsx-_internal-parsing",
+                  "python-sdk/pdsx-_internal-resolution",
+                  "python-sdk/pdsx-_internal-types"
+                ]
+              }
             ]
           }
         ],

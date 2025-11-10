@@ -1,0 +1,32 @@
+---
+title: parsing
+sidebarTitle: parsing
+---
+
+# `pdsx._internal.parsing`
+
+
+argument parsing utilities.
+
+## Functions
+
+### `parse_key_value_args`
+
+```python
+parse_key_value_args(args: list[str]) -> dict[str, Any]
+```
+
+
+parse key=value arguments into a dict.
+
+**Args:**
+- `args`: list of key=value strings
+
+**Returns:**
+- parsed dictionary
+
+**Examples:**
+
+>>> parse_key_value_args(["name=test", "count=5", "active=true"])
+{'name': 'test', 'count': 5, 'active': True}
+

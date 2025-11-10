@@ -1,0 +1,115 @@
+---
+title: operations
+sidebarTitle: operations
+---
+
+# `pdsx._internal.operations`
+
+
+atproto record operations.
+
+## Functions
+
+### `list_records`
+
+```python
+list_records(client: AsyncClient, collection: str, limit: int, repo: str | None = None, cursor: str | None = None) -> models.ComAtprotoRepoListRecords.Response
+```
+
+
+list records in a collection.
+
+**Args:**
+- `client`: authenticated atproto client
+- `collection`: collection name
+- `limit`: maximum number of records
+- `repo`: optional repo DID (defaults to authenticated user)
+- `cursor`: optional pagination cursor
+
+**Returns:**
+- response with records and optional cursor for next page
+
+
+### `get_record`
+
+```python
+get_record(client: AsyncClient, uri: str) -> models.ComAtprotoRepoGetRecord.Response
+```
+
+
+get a specific record.
+
+**Args:**
+- `client`: authenticated atproto client
+- `uri`: record AT-URI (can be shorthand like 'collection/rkey' if authenticated)
+
+**Returns:**
+- record response
+
+
+### `create_record`
+
+```python
+create_record(client: AsyncClient, collection: str, record: dict[str, RecordValue]) -> models.ComAtprotoRepoCreateRecord.Response
+```
+
+
+create a new record.
+
+**Args:**
+- `client`: authenticated atproto client
+- `collection`: collection name
+- `record`: record data
+
+**Returns:**
+- created record response
+
+
+### `update_record`
+
+```python
+update_record(client: AsyncClient, uri: str, updates: dict[str, RecordValue]) -> models.ComAtprotoRepoPutRecord.Response
+```
+
+
+update an existing record.
+
+**Args:**
+- `client`: authenticated atproto client
+- `uri`: record AT-URI (can be shorthand like 'collection/rkey' if authenticated)
+- `updates`: fields to update
+
+**Returns:**
+- updated record response
+
+
+### `delete_record`
+
+```python
+delete_record(client: AsyncClient, uri: str) -> None
+```
+
+
+delete a record.
+
+**Args:**
+- `client`: authenticated atproto client
+- `uri`: record AT-URI (can be shorthand like 'collection/rkey' if authenticated)
+
+
+### `upload_blob`
+
+```python
+upload_blob(client: AsyncClient, file_path: str | Path) -> models.ComAtprotoRepoUploadBlob.Response
+```
+
+
+upload a blob (image, video, etc.).
+
+**Args:**
+- `client`: authenticated atproto client
+- `file_path`: path to file to upload
+
+**Returns:**
+- upload response with blob reference
+

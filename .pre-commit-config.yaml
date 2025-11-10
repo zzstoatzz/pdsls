@@ -24,7 +24,7 @@ repos:
 
       - id: mdxify
         name: generate API docs
-        entry: uv run mdxify --all --root-module pdsx --output-dir docs/python-sdk
+        entry: uv run mdxify --all --root-module pdsx._internal --output-dir docs/python-sdk --include-internal
         language: system
         types: [python]
         pass_filenames: false

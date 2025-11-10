@@ -1,0 +1,65 @@
+---
+title: display
+sidebarTitle: display
+---
+
+# `pdsx._internal.display`
+
+
+display utilities for rich output.
+
+## Functions
+
+### `_value_to_dict`
+
+```python
+_value_to_dict(value: object) -> dict[str, object]
+```
+
+
+convert a record value to a dict, handling pydantic models and DotDict.
+
+
+### `display_records`
+
+```python
+display_records(collection: str, records: list[models.ComAtprotoRepoListRecords.Record]) -> None
+```
+
+
+display a list of records.
+
+**Args:**
+- `collection`: collection name
+- `records`: list of record objects
+- `output_format`: output format enum
+
+
+### `display_record`
+
+```python
+display_record(response: models.ComAtprotoRepoGetRecord.Response) -> None
+```
+
+
+display a single record in a panel.
+
+**Args:**
+- `response`: atproto record response
+
+
+### `display_success`
+
+```python
+display_success(operation: str, uri: str, cid: str, collection: str = '') -> None
+```
+
+
+display a success message.
+
+**Args:**
+- `operation`: operation performed (created, updated, deleted)
+- `uri`: record uri
+- `cid`: record cid
+- `collection`: optional collection name
+
