@@ -10,7 +10,7 @@ argument parsing utilities.
 
 ## Functions
 
-### `parse_key_value_args` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/parsing.py#L13" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `parse_key_value_args` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/parsing.py#L14" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 parse_key_value_args(args: list[str]) -> dict[str, Any]
@@ -18,6 +18,8 @@ parse_key_value_args(args: list[str]) -> dict[str, Any]
 
 
 parse key=value arguments into a dict.
+
+supports JSON for complex values (objects/arrays).
 
 **Args:**
 - `args`: list of key=value strings
@@ -29,4 +31,6 @@ parse key=value arguments into a dict.
 
 >>> parse_key_value_args(["name=test", "count=5", "active=true"])
 {'name': 'test', 'count': 5, 'active': True}
+>>> parse_key_value_args(['embed={"$type":"blob"}'])
+{'embed': {'$type': 'blob'}}
 

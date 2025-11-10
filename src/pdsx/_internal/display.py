@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from typing import TYPE_CHECKING
 
+import yaml
 from atproto_client.models.dot_dict import DotDict
 from pydantic import BaseModel
 from rich.console import Console
@@ -64,6 +65,23 @@ def display_records(
                 }
             )
         print(json.dumps(output, indent=2))
+        return
+
+    # yaml output
+    if output_format == OutputFormat.YAML:
+        output = []
+        for record in records:
+            rkey = record.uri.split("/")[-1]
+            value_dict = _value_to_dict(record.value)
+            output.append(
+                {
+                    "rkey": rkey,
+                    "uri": record.uri,
+                    "cid": record.cid,
+                    **value_dict,
+                }
+            )
+        print(yaml.dump(output, default_flow_style=False, sort_keys=False))
         return
 
     # compact output (one line per record)
