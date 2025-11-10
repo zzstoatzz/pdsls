@@ -32,6 +32,7 @@ from pdsx._internal.operations import (  # noqa: E402
 )
 from pdsx._internal.output import OutputFormat  # noqa: E402
 from pdsx._internal.parsing import parse_key_value_args  # noqa: E402
+from pdsx._internal.resolution import discover_pds  # noqa: E402
 from pdsx._internal.types import RecordValue  # noqa: E402
 
 
@@ -258,8 +259,11 @@ note: -r flag goes BEFORE the command (ls, get, etc.)
                 required=True,
             )
         else:
-            # for unauthenticated reads with -r, use default or provided PDS
-            client = AsyncClient(base_url=settings.atproto_pds_url)
+            # for unauthenticated reads with -r, auto-discover PDS from handle/DID
+            pds_url = (
+                await discover_pds(args.repo) if args.repo else settings.atproto_pds_url
+            )
+            client = AsyncClient(base_url=pds_url)
 
         if args.command in ("list", "ls"):
             output_fmt = OutputFormat(args.output) if args.output else None

@@ -1,0 +1,31 @@
+---
+title: auth
+sidebarTitle: auth
+---
+
+# `pdsx._internal.auth`
+
+
+authentication utilities for atproto.
+
+## Functions
+
+### `login` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/auth.py#L21" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+login(client: AsyncClient, handle: str | None = None, password: str | None = None) -> bool
+```
+
+
+authenticate with atproto.
+
+**Args:**
+- `client`: atproto client to authenticate
+- `handle`: user handle
+- `password`: user password
+- `silent`: suppress authentication output
+- `required`: whether authentication is required
+
+**Returns:**
+- True if authenticated, False if skipped (when not required)
+

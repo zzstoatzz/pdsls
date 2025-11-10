@@ -15,10 +15,14 @@ pdsx can read public records from any repository without authentication using th
 pdsx -r zzstoatzz.io ls app.bsky.feed.post --limit 5
 ```
 
-pdsx resolves:
+pdsx automatically discovers the correct PDS:
 1. handle → DID (via DNS TXT or HTTPS well-known)
-2. DID → PDS url (from DID document)
-3. fetches records from PDS
+2. DID → PDS URL (from DID document)
+3. fetches records from correct PDS
+
+<Note>
+**automatic PDS discovery** works for any handle or DID, including custom PDS instances. no manual configuration needed!
+</Note>
 
 ### read with DID (more durable)
 

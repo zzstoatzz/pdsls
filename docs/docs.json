@@ -1,27 +1,26 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "name": "pdsx",
-  "favicon": "/assets/favicon.svg",
   "colors": {
     "dark": "#0D9373",
     "light": "#07C983",
     "primary": "#0D9373"
   },
+  "favicon": "/assets/favicon.svg",
+  "footer": {
+    "socials": {
+      "github": "https://github.com/zzstoatzz/pdsx"
+    }
+  },
+  "name": "pdsx",
   "navbar": {
     "primary": {
       "href": "https://github.com/zzstoatzz/pdsx",
       "type": "github"
     }
   },
-  "footer": {
-    "socials": {
-      "github": "https://github.com/zzstoatzz/pdsx"
-    }
-  },
   "navigation": {
     "tabs": [
       {
-        "tab": "Documentation",
         "groups": [
           {
             "group": "Getting Started",
@@ -47,13 +46,28 @@
               "concepts/addressing"
             ]
           }
-        ]
+        ],
+        "tab": "Documentation"
       },
       {
-        "tab": "API Reference",
         "pages": [
-          "api-reference/pdsx-cli"
-        ]
+          "api-reference/pdsx-cli",
+          {
+            "group": "pdsx._internal",
+            "pages": [
+              "api-reference/pdsx-_internal-__init__",
+              "api-reference/pdsx-_internal-auth",
+              "api-reference/pdsx-_internal-config",
+              "api-reference/pdsx-_internal-display",
+              "api-reference/pdsx-_internal-operations",
+              "api-reference/pdsx-_internal-output",
+              "api-reference/pdsx-_internal-parsing",
+              "api-reference/pdsx-_internal-resolution",
+              "api-reference/pdsx-_internal-types"
+            ]
+          }
+        ],
+        "tab": "API Reference"
       }
     ]
   },

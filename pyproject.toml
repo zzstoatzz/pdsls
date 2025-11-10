@@ -37,6 +37,7 @@ dev = [
     "prek>=0.2.0",
     "ty>=0.0.1a25",
     "mdxify>=0.2.34",
+    "pytest-mock>=3.15.1",
 ]
 
 [build-system]
