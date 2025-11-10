@@ -10,7 +10,7 @@ atproto record operations.
 
 ## Functions
 
-### `list_records`
+### `list_records` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/operations.py#L22" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 list_records(client: AsyncClient, collection: str, limit: int, repo: str | None = None, cursor: str | None = None) -> models.ComAtprotoRepoListRecords.Response
@@ -30,7 +30,7 @@ list records in a collection.
 - response with records and optional cursor for next page
 
 
-### `get_record`
+### `get_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/operations.py#L57" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 get_record(client: AsyncClient, uri: str) -> models.ComAtprotoRepoGetRecord.Response
@@ -47,7 +47,7 @@ get a specific record.
 - record response
 
 
-### `create_record`
+### `create_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/operations.py#L81" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 create_record(client: AsyncClient, collection: str, record: dict[str, RecordValue]) -> models.ComAtprotoRepoCreateRecord.Response
@@ -65,7 +65,7 @@ create a new record.
 - created record response
 
 
-### `update_record`
+### `update_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/operations.py#L116" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 update_record(client: AsyncClient, uri: str, updates: dict[str, RecordValue]) -> models.ComAtprotoRepoPutRecord.Response
@@ -83,7 +83,7 @@ update an existing record.
 - updated record response
 
 
-### `delete_record`
+### `delete_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/operations.py#L160" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 delete_record(client: AsyncClient, uri: str) -> None
@@ -97,7 +97,7 @@ delete a record.
 - `uri`: record AT-URI (can be shorthand like 'collection/rkey' if authenticated)
 
 
-### `upload_blob`
+### `upload_blob` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/operations.py#L181" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 upload_blob(client: AsyncClient, file_path: str | Path) -> models.ComAtprotoRepoUploadBlob.Response

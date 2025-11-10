@@ -1,6 +1,6 @@
 # generate api reference docs with mdxify
 generate-docs:
-    uv run mdxify --all --root-module pdsx --output-dir docs/api-reference
+    uv run mdxify --all --root-module pdsx --output-dir docs/api-reference --include-internal
 
 # run tests
 test:

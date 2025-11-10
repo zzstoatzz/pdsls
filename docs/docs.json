@@ -50,29 +50,20 @@
         "tab": "Documentation"
       },
       {
-        "groups": [
+        "pages": [
+          "api-reference/pdsx-cli",
           {
-            "group": "CLI Reference",
+            "group": "pdsx._internal",
             "pages": [
-              "api-reference/pdsx-cli"
-            ]
-          },
-          {
-            "group": "SDK Reference",
-            "pages": [
-              {
-                "group": "pdsx._internal",
-                "pages": [
-                  "python-sdk/pdsx-_internal-auth",
-                  "python-sdk/pdsx-_internal-config",
-                  "python-sdk/pdsx-_internal-display",
-                  "python-sdk/pdsx-_internal-operations",
-                  "python-sdk/pdsx-_internal-output",
-                  "python-sdk/pdsx-_internal-parsing",
-                  "python-sdk/pdsx-_internal-resolution",
-                  "python-sdk/pdsx-_internal-types"
-                ]
-              }
+              "api-reference/pdsx-_internal-__init__",
+              "api-reference/pdsx-_internal-auth",
+              "api-reference/pdsx-_internal-config",
+              "api-reference/pdsx-_internal-display",
+              "api-reference/pdsx-_internal-operations",
+              "api-reference/pdsx-_internal-output",
+              "api-reference/pdsx-_internal-parsing",
+              "api-reference/pdsx-_internal-resolution",
+              "api-reference/pdsx-_internal-types"
             ]
           }
         ],
