@@ -10,7 +10,7 @@ display utilities for rich output.
 
 ## Functions
 
-### `_value_to_dict` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/display.py#L22" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `_value_to_dict` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/display.py#L23" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 _value_to_dict(value: object) -> dict[str, object]
@@ -20,7 +20,7 @@ _value_to_dict(value: object) -> dict[str, object]
 convert a record value to a dict, handling pydantic models and DotDict.
 
 
-### `display_records` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/display.py#L34" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `display_records` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/display.py#L35" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 display_records(collection: str, records: list[models.ComAtprotoRepoListRecords.Record]) -> None
@@ -35,7 +35,7 @@ display a list of records.
 - `output_format`: output format enum
 
 
-### `display_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/display.py#L123" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `display_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/display.py#L141" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 display_record(response: models.ComAtprotoRepoGetRecord.Response) -> None
@@ -48,7 +48,7 @@ display a single record in a panel.
 - `response`: atproto record response
 
 
-### `display_success` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/display.py#L144" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `display_success` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/display.py#L162" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 display_success(operation: str, uri: str, cid: str, collection: str = '') -> None

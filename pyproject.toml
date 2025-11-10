@@ -23,7 +23,12 @@ classifiers = [
     "Typing :: Typed",
 ]
 
-dependencies = ["atproto>=0.0.63", "pydantic-settings>=2.7.0", "rich>=13.0.0"]
+dependencies = [
+    "atproto>=0.0.63",
+    "pydantic-settings>=2.7.0",
+    "pyyaml>=6.0.3",
+    "rich>=13.0.0",
+]
 
 [project.scripts]
 pdsx = "pdsx.cli:main"

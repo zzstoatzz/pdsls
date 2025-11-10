@@ -2,4 +2,6 @@
 
 from __future__ import annotations
 
-RecordValue = str | int | float | bool | None
+from typing import Any
+
+RecordValue = str | int | float | bool | None | dict[str, Any] | list[Any]
