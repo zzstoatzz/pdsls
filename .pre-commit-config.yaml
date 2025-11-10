@@ -22,6 +22,13 @@ repos:
         types: [python]
         pass_filenames: false
 
+      - id: mdxify
+        name: generate API docs
+        entry: uv run mdxify --all --root-module pdsx --output-dir docs/python-sdk
+        language: system
+        types: [python]
+        pass_filenames: false
+
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:

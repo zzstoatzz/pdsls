@@ -12,7 +12,6 @@ from typing import NoReturn
 warnings.filterwarnings("ignore", category=UserWarning, module="pydantic")
 
 from atproto import AsyncClient  # noqa: E402
-from atproto_identity.resolver import AsyncIdResolver  # noqa: E402
 
 from pdsx import __version__  # noqa: E402
 from pdsx._internal.auth import login  # noqa: E402
@@ -33,34 +32,8 @@ from pdsx._internal.operations import (  # noqa: E402
 )
 from pdsx._internal.output import OutputFormat  # noqa: E402
 from pdsx._internal.parsing import parse_key_value_args  # noqa: E402
+from pdsx._internal.resolution import discover_pds  # noqa: E402
 from pdsx._internal.types import RecordValue  # noqa: E402
-
-
-async def discover_pds(repo: str) -> str:
-    """discover PDS URL from handle or DID.
-
-    Args:
-        repo: handle (e.g., 'zzstoatzz.io') or DID (e.g., 'did:plc:...')
-
-    Returns:
-        PDS URL (e.g., 'https://pds.zzstoatzz.io')
-    """
-    resolver = AsyncIdResolver()
-
-    # if repo looks like a DID, use it directly; otherwise resolve handle to DID
-    if repo.startswith("did:"):
-        did = repo
-    else:
-        did = await resolver.handle.resolve(repo)
-        if not did:
-            raise ValueError(f"could not resolve handle: {repo}")
-
-    # resolve DID to atproto data which includes PDS URL
-    atproto_data = await resolver.did.resolve_atproto_data(did)
-    if not atproto_data or not atproto_data.pds:
-        raise ValueError(f"could not find PDS for: {repo}")
-
-    return atproto_data.pds
 
 
 async def cmd_list(

@@ -15,6 +15,7 @@ else:
 if TYPE_CHECKING:
     from atproto import AsyncClient, models
 
+from pdsx._internal.resolution import URIParts
 from pdsx._internal.types import RecordValue
 
 
@@ -66,26 +67,13 @@ async def get_record(
     Returns:
         record response
     """
-    # strip at:// prefix if present
-    uri_without_prefix = uri.replace("at://", "")
-    parts = uri_without_prefix.split("/")
-
-    # if shorthand format (collection/rkey), use authenticated user's DID
-    if len(parts) == 2:
-        if not client.me:
-            raise ValueError("shorthand URI requires authentication")
-        repo = client.me.did
-        collection, rkey = parts
-    elif len(parts) == 3:
-        repo, collection, rkey = parts
-    else:
-        raise ValueError(f"invalid URI format: {uri}")
+    parts = URIParts.from_uri(uri, client.me.did if client.me else None)
 
     return await client.com.atproto.repo.get_record(
         {
-            "repo": repo,
-            "collection": collection,
-            "rkey": rkey,
+            "repo": parts.repo,
+            "collection": parts.collection,
+            "rkey": parts.rkey,
         }
     )
 
@@ -140,27 +128,14 @@ async def update_record(
     Returns:
         updated record response
     """
-    # strip at:// prefix if present
-    uri_without_prefix = uri.replace("at://", "")
-    parts = uri_without_prefix.split("/")
-
-    # if shorthand format (collection/rkey), use authenticated user's DID
-    if len(parts) == 2:
-        if not client.me:
-            raise ValueError("shorthand URI requires authentication")
-        repo = client.me.did
-        collection, rkey = parts
-    elif len(parts) == 3:
-        repo, collection, rkey = parts
-    else:
-        raise ValueError(f"invalid URI format: {uri}")
+    parts = URIParts.from_uri(uri, client.me.did if client.me else None)
 
     # get current
     current = await client.com.atproto.repo.get_record(
         {
-            "repo": repo,
-            "collection": collection,
-            "rkey": rkey,
+            "repo": parts.repo,
+            "collection": parts.collection,
+            "rkey": parts.rkey,
         }
     )
 
@@ -174,9 +149,9 @@ async def update_record(
     # put
     return await client.com.atproto.repo.put_record(
         {
-            "repo": repo,
-            "collection": collection,
-            "rkey": rkey,
+            "repo": parts.repo,
+            "collection": parts.collection,
+            "rkey": parts.rkey,
             "record": updated_value,
         }
     )
@@ -192,26 +167,13 @@ async def delete_record(
         client: authenticated atproto client
         uri: record AT-URI (can be shorthand like 'collection/rkey' if authenticated)
     """
-    # strip at:// prefix if present
-    uri_without_prefix = uri.replace("at://", "")
-    parts = uri_without_prefix.split("/")
-
-    # if shorthand format (collection/rkey), use authenticated user's DID
-    if len(parts) == 2:
-        if not client.me:
-            raise ValueError("shorthand URI requires authentication")
-        repo = client.me.did
-        collection, rkey = parts
-    elif len(parts) == 3:
-        repo, collection, rkey = parts
-    else:
-        raise ValueError(f"invalid URI format: {uri}")
+    parts = URIParts.from_uri(uri, client.me.did if client.me else None)
 
     await client.com.atproto.repo.delete_record(
         {
-            "repo": repo,
-            "collection": collection,
-            "rkey": rkey,
+            "repo": parts.repo,
+            "collection": parts.collection,
+            "rkey": parts.rkey,
         }
     )
 

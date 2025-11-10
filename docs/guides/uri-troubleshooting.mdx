@@ -52,10 +52,14 @@ pdsx -r zzstoatzz.io ls app.bsky.feed.post -o json | jq -r '.[0].uri'
 
 ```bash
 # authenticated only:
-pdsx get app.bsky.feed.post/3jwdwj2ctlk26
+pdsx cat app.bsky.feed.post/3jwdwj2ctlk26
 pdsx edit app.bsky.actor.profile/self description='new bio'
 pdsx rm app.bsky.feed.post/3jwdwj2ctlk26
 ```
+
+<Note>
+shorthand URIs work with `cat`, `edit`, and `rm` commands when authenticated. read operations with `-r` flag don't support shorthand (use full AT-URIs instead).
+</Note>
 
 ## DID vs handle in URIs
 

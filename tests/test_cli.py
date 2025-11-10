@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from pdsx.cli import discover_pds
+from pdsx._internal.resolution import discover_pds
 
 
 def test_version_flag_long() -> None:
@@ -64,7 +64,9 @@ class TestDiscoverPds:
             return_value=mock_atproto_data
         )
 
-        mocker.patch("pdsx.cli.AsyncIdResolver", return_value=mock_resolver)
+        mocker.patch(
+            "pdsx._internal.resolution.AsyncIdResolver", return_value=mock_resolver
+        )
 
         result = await discover_pds(repo)
         assert result == expected_pds
@@ -74,7 +76,9 @@ class TestDiscoverPds:
         mock_resolver = MagicMock()
         mock_resolver.handle.resolve = AsyncMock(return_value=None)
 
-        mocker.patch("pdsx.cli.AsyncIdResolver", return_value=mock_resolver)
+        mocker.patch(
+            "pdsx._internal.resolution.AsyncIdResolver", return_value=mock_resolver
+        )
 
         with pytest.raises(ValueError, match="could not resolve handle"):
             await discover_pds("invalid.handle")
@@ -90,7 +94,9 @@ class TestDiscoverPds:
             return_value=mock_atproto_data
         )
 
-        mocker.patch("pdsx.cli.AsyncIdResolver", return_value=mock_resolver)
+        mocker.patch(
+            "pdsx._internal.resolution.AsyncIdResolver", return_value=mock_resolver
+        )
 
         with pytest.raises(ValueError, match="could not find PDS"):
             await discover_pds("test.handle")
