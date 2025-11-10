@@ -3,8 +3,6 @@ title: "Quick Start"
 description: "get up and running with pdsx in 5 minutes"
 ---
 
-# quick start
-
 ## installation
 
 ```bash
@@ -35,6 +33,10 @@ pdsx -r zzstoatzz.io ls app.bsky.feed.post -o json | jq -r '.[] | .text'
 
 **tip**: `-r` is the repo flag - it can be a handle or did
 
+<Note>
+see the [read any repository](/guides/read-repositories) guide for more details on reading public data
+</Note>
+
 ## writing records (auth required)
 
 set up authentication:
@@ -50,6 +52,10 @@ or use .env file:
 ATPROTO_HANDLE=your.handle
 ATPROTO_PASSWORD=your-password
 ```
+
+<Note>
+see [configure for writes](/guides/configure-for-writes) for detailed authentication setup
+</Note>
 
 now you can create, update, and delete:
 
@@ -127,6 +133,10 @@ pdsx upload-blob photo.jpg
 # (programmatically - pdsx doesn't have high-level post-with-image yet)
 ```
 
+<Note>
+see the [blob upload](/guides/blob-upload) guide for complete workflow and examples
+</Note>
+
 ## output formats
 
 pdsx supports multiple output formats:
@@ -172,6 +182,10 @@ pdsx get app.bsky.feed.post/abc123
 pdsx edit app.bsky.feed.post/abc123 text='updated'
 pdsx rm app.bsky.feed.post/abc123
 ```
+
+<Note>
+if you get "invalid URI format" errors, see [AT-URI troubleshooting](/guides/uri-troubleshooting)
+</Note>
 
 ## common collections
 
