@@ -33,6 +33,7 @@
             "pages": [
               "guides/configure-for-writes",
               "guides/read-repositories",
+              "guides/batch-operations",
               "guides/uri-troubleshooting",
               "guides/crud-safety",
               "guides/blob-upload"
@@ -57,6 +58,7 @@
             "pages": [
               "api-reference/pdsx-_internal-__init__",
               "api-reference/pdsx-_internal-auth",
+              "api-reference/pdsx-_internal-batch",
               "api-reference/pdsx-_internal-config",
               "api-reference/pdsx-_internal-display",
               "api-reference/pdsx-_internal-operations",

@@ -1,0 +1,196 @@
+---
+title: "Batch Operations"
+description: "Perform concurrent CRUD operations on multiple records"
+---
+
+batch operations allow you to create or delete multiple records concurrently, dramatically improving performance for bulk operations.
+
+## batch delete
+
+delete multiple records in one command with automatic concurrency control.
+
+### multiple URIs as arguments
+
+```bash
+pdsx rm app.bsky.feed.post/abc123 app.bsky.feed.post/def456 app.bsky.feed.post/ghi789
+```
+
+output:
+```
+✓ successfully deleted 3/3 records (100%)
+```
+
+### from file via stdin
+
+```bash
+# one URI per line
+cat uris.txt | pdsx rm
+```
+
+where `uris.txt` contains:
+```
+app.bsky.feed.post/abc123
+app.bsky.feed.post/def456
+app.bsky.feed.post/ghi789
+```
+
+### control concurrency
+
+```bash
+# default is 10 concurrent operations
+pdsx rm uri1 uri2 uri3 --concurrency 20
+
+# fail on first error instead of continuing
+pdsx rm uri1 uri2 uri3 --fail-fast
+```
+
+## batch create
+
+create multiple records from JSONL (JSON Lines) format.
+
+### single record (backward compatible)
+
+```bash
+pdsx create app.bsky.feed.post text="hello world"
+```
+
+### batch create from JSONL
+
+```bash
+cat posts.jsonl | pdsx create app.bsky.feed.post
+```
+
+where `posts.jsonl` contains one JSON object per line:
+```json
+{"text": "first post"}
+{"text": "second post"}
+{"text": "third post", "langs": ["en"]}
+```
+
+output:
+```
+✓ successfully created 3/3 records (100%)
+```
+
+### control concurrency
+
+```bash
+cat posts.jsonl | pdsx create app.bsky.feed.post --concurrency 20
+cat posts.jsonl | pdsx create app.bsky.feed.post --fail-fast
+```
+
+## JSONL format
+
+JSONL (JSON Lines) is one JSON object per line:
+
+```json
+{"field1": "value1", "field2": "value2"}
+{"field1": "value3", "field2": "value4"}
+{"field1": "value5"}
+```
+
+**rules:**
+- one complete JSON object per line
+- no commas between objects
+- empty lines are ignored
+- no array wrapper `[...]`
+
+**generate JSONL:**
+
+```bash
+# from jq
+pdsx ls app.bsky.feed.post -o json | jq -c '.[]' > posts.jsonl
+
+# manually
+echo '{"text": "post 1"}' > posts.jsonl
+echo '{"text": "post 2"}' >> posts.jsonl
+```
+
+## performance
+
+batch operations use concurrent execution with rate limiting:
+
+- **default concurrency**: 10 simultaneous operations
+- **respects rate limits**: semaphore-based throttling
+- **progress tracking**: shows progress bar in interactive terminals
+- **error handling**: continues on error by default, reports failures at end
+
+### real-world performance
+
+sequential deletion (old way):
+```bash
+for uri in $(cat uris.txt); do pdsx rm $uri; done
+# 82 records: ~41 seconds (0.5s per record)
+```
+
+batch deletion (new way):
+```bash
+cat uris.txt | pdsx rm
+# 82 records: ~8 seconds (10 concurrent)
+```
+
+**5x faster** for bulk operations.
+
+## common workflows
+
+### backup and restore
+
+```bash
+# backup all posts to JSONL
+pdsx ls app.bsky.feed.post --limit 1000 -o json | jq -c '.[]' > backup.jsonl
+
+# restore from backup (be careful!)
+cat backup.jsonl | pdsx create app.bsky.feed.post
+```
+
+### bulk delete by pattern
+
+```bash
+# find test posts and delete them
+pdsx ls app.bsky.feed.post --limit 100 -o json \
+  | jq -r '.[] | select(.text | contains("[test]")) | .uri' \
+  | sed 's|at://did:plc:[^/]*/||' \
+  | pdsx rm
+```
+
+### migrate records
+
+```bash
+# export from one collection
+pdsx ls app.custom.collection -o json | jq -c '.[]' > export.jsonl
+
+# import to another (after editing JSONL)
+cat export.jsonl | pdsx create app.custom.newcollection
+```
+
+## limitations
+
+- **no batch update yet**: coming in a future release
+- **authentication required**: batch operations need valid credentials
+- **rate limits apply**: respect PDS rate limits with `--concurrency`
+- **memory usage**: large batches held in memory during processing
+
+## error handling
+
+### continue on error (default)
+
+```bash
+cat uris.txt | pdsx rm
+```
+
+if some URIs fail, it continues and reports:
+```
+✓ successfully deleted 80/82 records (97%)
+
+✗ 2 operations failed:
+  abc123: Record not found
+  def456: Invalid URI format
+```
+
+### fail-fast mode
+
+```bash
+cat uris.txt | pdsx rm --fail-fast
+```
+
+stops immediately on first error - useful for testing.
