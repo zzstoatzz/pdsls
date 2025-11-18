@@ -28,6 +28,7 @@ uvx pdsx edit app.bsky.actor.profile/self description='new bio'
 ## features
 
 - crud operations for atproto records (list, get, create, update, delete)
+- **batch operations**: delete multiple records concurrently with progress tracking
 - **blob upload**: upload images, videos, and other binary content
 - **cursor pagination**: paginate through large collections
 - optional auth: reads with `--repo` flag don't require authentication
@@ -91,6 +92,22 @@ pdsx create app.bsky.feed.post text='Hello from pdsx!'
 
 # delete a post (use the rkey from create output)
 pdsx rm app.bsky.feed.post/PASTE_RKEY_HERE
+```
+
+### batch operations
+
+```bash
+# delete multiple records (runs concurrently)
+pdsx rm app.bsky.feed.post/abc123 app.bsky.feed.post/def456 app.bsky.feed.post/ghi789
+
+# delete from file via stdin (the Unix way)
+cat uris.txt | pdsx rm
+
+# control concurrency (default: 10)
+pdsx rm uri1 uri2 uri3 --concurrency 20
+
+# fail-fast mode (stop on first error)
+pdsx rm uri1 uri2 uri3 --fail-fast
 ```
 
 **note**: when authenticated, use shorthand URIs (`collection/rkey`) instead of full AT-URIs (`at://did:plc:.../collection/rkey`)

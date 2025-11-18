@@ -1,0 +1,86 @@
+---
+title: batch
+sidebarTitle: batch
+---
+
+# `pdsx._internal.batch`
+
+
+batch operations for concurrent CRUD operations.
+
+## Functions
+
+### `batch_delete` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/batch.py#L40" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+batch_delete(client: AsyncClient, uris: list[str]) -> BatchResult
+```
+
+
+delete multiple records concurrently.
+
+**Args:**
+- `client`: authenticated atproto client
+- `uris`: list of record URIs to delete
+- `concurrency`: maximum concurrent operations (default\: 10)
+- `fail_fast`: stop on first error (default\: False)
+- `show_progress`: show progress bar (default\: True)
+
+**Returns:**
+- batch result with successful and failed operations
+
+
+### `read_uris_from_stdin` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/batch.py#L105" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+read_uris_from_stdin() -> list[str]
+```
+
+
+read URIs from stdin, one per line.
+
+**Returns:**
+- list of URIs read from stdin
+
+
+### `display_batch_result` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/batch.py#L117" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+display_batch_result(result: BatchResult, operation: str = 'deleted') -> None
+```
+
+
+display batch operation results.
+
+**Args:**
+- `result`: batch operation result
+- `operation`: operation name for display (e.g., "deleted", "updated")
+
+
+## Classes
+
+### `BatchResult` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/batch.py#L23" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+
+result of a batch operation.
+
+
+**Methods:**
+
+#### `total` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/batch.py#L30" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+total(self) -> int
+```
+
+total operations attempted.
+
+
+#### `success_rate` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/batch.py#L35" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+success_rate(self) -> float
+```
+
+success rate as percentage.
+

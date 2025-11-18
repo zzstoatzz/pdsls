@@ -15,6 +15,11 @@ from atproto import AsyncClient  # noqa: E402
 
 from pdsx import __version__  # noqa: E402
 from pdsx._internal.auth import login  # noqa: E402
+from pdsx._internal.batch import (  # noqa: E402
+    batch_delete,
+    display_batch_result,
+    read_uris_from_stdin,
+)
 from pdsx._internal.config import settings  # noqa: E402
 from pdsx._internal.display import (  # noqa: E402
     console,
@@ -95,10 +100,30 @@ async def cmd_update(
     display_success("updated", response.uri, response.cid)
 
 
-async def cmd_delete(client: AsyncClient, uri: str) -> None:
-    """delete a record."""
-    await delete_record(client, uri)
-    display_success("deleted", "", "")
+async def cmd_delete(
+    client: AsyncClient,
+    uris: list[str],
+    *,
+    concurrency: int = 10,
+    fail_fast: bool = False,
+) -> None:
+    """delete one or more records."""
+    # single URI - use existing behavior for backward compatibility
+    if len(uris) == 1:
+        await delete_record(client, uris[0])
+        display_success("deleted", "", "")
+        return
+
+    # multiple URIs - use batch operations
+    show_progress = sys.stdout.isatty()  # only show progress if interactive
+    result = await batch_delete(
+        client,
+        uris,
+        concurrency=concurrency,
+        fail_fast=fail_fast,
+        show_progress=show_progress,
+    )
+    display_batch_result(result, "deleted")
 
 
 async def cmd_upload_blob(client: AsyncClient, file_path: str) -> None:
@@ -227,9 +252,24 @@ note: -r flag goes BEFORE the command (ls, get, etc.)
 
     # delete (rm alias)
     delete_parser = subparsers.add_parser(
-        "delete", aliases=["rm"], help="delete record"
+        "delete", aliases=["rm"], help="delete record(s)"
     )
-    delete_parser.add_argument("uri", help="record AT-URI")
+    delete_parser.add_argument(
+        "uris",
+        nargs="*",
+        help="record AT-URI(s) - reads from stdin if not provided",
+    )
+    delete_parser.add_argument(
+        "--concurrency",
+        type=int,
+        default=10,
+        help="max concurrent operations for batch delete (default: 10)",
+    )
+    delete_parser.add_argument(
+        "--fail-fast",
+        action="store_true",
+        help="stop on first error (default: continue on error)",
+    )
 
     # upload-blob
     upload_blob_parser = subparsers.add_parser(
@@ -303,7 +343,20 @@ note: -r flag goes BEFORE the command (ls, get, etc.)
             await cmd_update(client, args.uri, updates)
 
         elif args.command in ("delete", "rm"):
-            await cmd_delete(client, args.uri)
+            uris = args.uris if args.uris else read_uris_from_stdin()
+
+            if not uris:
+                console.print(
+                    "[red]error:[/red] no URIs provided (use positional arguments or pipe to stdin)"
+                )
+                return 1
+
+            await cmd_delete(
+                client,
+                uris,
+                concurrency=args.concurrency,
+                fail_fast=args.fail_fast,
+            )
 
         elif args.command == "upload-blob":
             await cmd_upload_blob(client, args.file_path)
