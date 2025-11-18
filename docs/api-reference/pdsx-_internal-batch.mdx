@@ -51,7 +51,27 @@ create multiple records concurrently.
 - batch result with successful URIs and failed operations
 
 
-### `read_uris_from_stdin` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/batch.py#L176" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `batch_update` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/batch.py#L176" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+batch_update(client: AsyncClient, updates: list[tuple[str, dict[str, RecordValue]]]) -> BatchResult
+```
+
+
+update multiple records concurrently.
+
+**Args:**
+- `client`: authenticated atproto client
+- `updates`: list of (uri, updates_dict) tuples
+- `concurrency`: maximum concurrent operations (default\: 10)
+- `fail_fast`: stop on first error (default\: False)
+- `show_progress`: show progress bar (default\: True)
+
+**Returns:**
+- batch result with successful URIs and failed operations
+
+
+### `read_uris_from_stdin` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/batch.py#L241" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 read_uris_from_stdin() -> list[str]
@@ -64,7 +84,7 @@ read URIs from stdin, one per line.
 - list of URIs read from stdin
 
 
-### `read_records_from_stdin` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/batch.py#L188" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `read_records_from_stdin` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/batch.py#L253" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 read_records_from_stdin() -> list[dict[str, RecordValue]]
@@ -80,7 +100,25 @@ read JSONL records from stdin, one JSON object per line.
 - `ValueError`: if JSON parsing fails
 
 
-### `display_batch_result` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/batch.py#L220" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `read_updates_from_stdin` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/batch.py#L285" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+read_updates_from_stdin() -> list[tuple[str, dict[str, RecordValue]]]
+```
+
+
+read JSONL update records from stdin.
+
+each line should be a JSON object with a 'uri' field and update fields.
+
+**Returns:**
+- list of (uri, updates_dict) tuples
+
+**Raises:**
+- `ValueError`: if JSON parsing fails or uri field is missing
+
+
+### `display_batch_result` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/batch.py#L330" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 display_batch_result(result: BatchResult, operation: str = 'deleted') -> None

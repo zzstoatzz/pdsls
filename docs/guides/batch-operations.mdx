@@ -79,6 +79,43 @@ cat posts.jsonl | pdsx create app.bsky.feed.post --concurrency 20
 cat posts.jsonl | pdsx create app.bsky.feed.post --fail-fast
 ```
 
+## batch update
+
+update multiple records from JSONL format with uri field.
+
+### single update (backward compatible)
+
+```bash
+pdsx update app.bsky.feed.post/abc123 text="updated text"
+```
+
+### batch update from JSONL
+
+```bash
+cat updates.jsonl | pdsx update
+```
+
+where `updates.jsonl` contains one JSON object per line with a `uri` field:
+```json
+{"uri": "app.bsky.feed.post/abc123", "text": "new text for post 1"}
+{"uri": "app.bsky.feed.post/def456", "text": "new text for post 2", "langs": ["en"]}
+{"uri": "app.bsky.feed.post/ghi789", "text": "new text for post 3"}
+```
+
+output:
+```
+✓ successfully updated 3/3 records (100%)
+```
+
+**note**: the `uri` field can be a shorthand URI (just the record key) or a full AT-URI. the `uri` field is extracted from each JSON object, and the remaining fields are used as the update data.
+
+### control concurrency
+
+```bash
+cat updates.jsonl | pdsx update --concurrency 20
+cat updates.jsonl | pdsx update --fail-fast
+```
+
 ## JSONL format
 
 JSONL (JSON Lines) is one JSON object per line:
@@ -163,9 +200,17 @@ pdsx ls app.custom.collection -o json | jq -c '.[]' > export.jsonl
 cat export.jsonl | pdsx create app.custom.newcollection
 ```
 
+### bulk update posts
+
+```bash
+# find posts to update and generate JSONL with modifications
+pdsx ls app.bsky.feed.post --limit 100 -o json \
+  | jq -c '.[] | select(.text | contains("[draft]")) | {uri: (.uri | sub("at://[^/]+/"; "")), text: (.text | sub("\\[draft\\] "; ""))}' \
+  | pdsx update
+```
+
 ## limitations
 
-- **no batch update yet**: coming in a future release
 - **authentication required**: batch operations need valid credentials
 - **rate limits apply**: respect PDS rate limits with `--concurrency`
 - **memory usage**: large batches held in memory during processing
