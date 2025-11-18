@@ -10,7 +10,7 @@ batch operations for concurrent CRUD operations.
 
 ## Functions
 
-### `batch_delete` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/batch.py#L40" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `batch_delete` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/batch.py#L41" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 batch_delete(client: AsyncClient, uris: list[str]) -> BatchResult
@@ -30,7 +30,28 @@ delete multiple records concurrently.
 - batch result with successful and failed operations
 
 
-### `read_uris_from_stdin` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/batch.py#L105" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `batch_create` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/batch.py#L106" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+batch_create(client: AsyncClient, collection: str, records: list[dict[str, RecordValue]]) -> BatchResult
+```
+
+
+create multiple records concurrently.
+
+**Args:**
+- `client`: authenticated atproto client
+- `collection`: collection name
+- `records`: list of record data dictionaries
+- `concurrency`: maximum concurrent operations (default\: 10)
+- `fail_fast`: stop on first error (default\: False)
+- `show_progress`: show progress bar (default\: True)
+
+**Returns:**
+- batch result with successful URIs and failed operations
+
+
+### `read_uris_from_stdin` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/batch.py#L176" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 read_uris_from_stdin() -> list[str]
@@ -43,7 +64,23 @@ read URIs from stdin, one per line.
 - list of URIs read from stdin
 
 
-### `display_batch_result` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/batch.py#L117" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `read_records_from_stdin` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/batch.py#L188" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+read_records_from_stdin() -> list[dict[str, RecordValue]]
+```
+
+
+read JSONL records from stdin, one JSON object per line.
+
+**Returns:**
+- list of record dictionaries parsed from JSONL
+
+**Raises:**
+- `ValueError`: if JSON parsing fails
+
+
+### `display_batch_result` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/batch.py#L220" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 display_batch_result(result: BatchResult, operation: str = 'deleted') -> None
@@ -59,7 +96,7 @@ display batch operation results.
 
 ## Classes
 
-### `BatchResult` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/batch.py#L23" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `BatchResult` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/batch.py#L24" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 
 result of a batch operation.
@@ -67,7 +104,7 @@ result of a batch operation.
 
 **Methods:**
 
-#### `total` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/batch.py#L30" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+#### `total` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/batch.py#L31" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 total(self) -> int
@@ -76,7 +113,7 @@ total(self) -> int
 total operations attempted.
 
 
-#### `success_rate` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/batch.py#L35" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+#### `success_rate` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/batch.py#L36" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 success_rate(self) -> float

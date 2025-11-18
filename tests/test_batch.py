@@ -5,7 +5,13 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from atproto import AsyncClient
 
-from pdsx._internal.batch import BatchResult, batch_delete, read_uris_from_stdin
+from pdsx._internal.batch import (
+    BatchResult,
+    batch_create,
+    batch_delete,
+    read_records_from_stdin,
+    read_uris_from_stdin,
+)
 
 
 @pytest.fixture
@@ -207,3 +213,149 @@ class TestReadUrisFromStdin:
             uris = read_uris_from_stdin()
 
         assert uris == []
+
+
+class TestBatchCreate:
+    """tests for batch_create function."""
+
+    async def test_batch_create_all_successful(self, mock_client: AsyncClient) -> None:
+        """test batch create with all operations successful."""
+        records = [
+            {"text": "post 1"},
+            {"text": "post 2"},
+            {"text": "post 3"},
+        ]
+
+        mock_response = MagicMock()
+        mock_response.uri = "at://did:plc:test123/app.bsky.feed.post/abc123"
+
+        with patch(
+            "pdsx._internal.batch.create_record", new_callable=AsyncMock
+        ) as mock_create:
+            mock_create.return_value = mock_response
+            result = await batch_create(
+                mock_client,
+                "app.bsky.feed.post",
+                records,
+                show_progress=False,
+            )
+
+        assert len(result.successful) == 3
+        assert len(result.failed) == 0
+        assert result.total == 3
+        assert result.success_rate == 100.0
+
+    async def test_batch_create_with_failures(self, mock_client: AsyncClient) -> None:
+        """test batch create with some failures."""
+        records = [
+            {"text": "post 1"},
+            {"text": "post 2"},
+            {"text": "post 3"},
+        ]
+
+        async def mock_create(
+            client: AsyncClient, collection: str, record: dict
+        ) -> MagicMock:
+            """mock create that fails on second record."""
+            if record["text"] == "post 2":
+                raise ValueError("simulated failure")
+            mock_response = MagicMock()
+            mock_response.uri = f"at://did:plc:test123/{collection}/{record['text']}"
+            return mock_response
+
+        with patch("pdsx._internal.batch.create_record", side_effect=mock_create):
+            result = await batch_create(
+                mock_client,
+                "app.bsky.feed.post",
+                records,
+                show_progress=False,
+            )
+
+        assert len(result.successful) == 2
+        assert len(result.failed) == 1
+        assert result.total == 3
+        assert result.success_rate == pytest.approx(66.67, rel=0.01)
+        assert result.failed[0][0] == "record #2"
+        assert isinstance(result.failed[0][1], ValueError)
+
+    async def test_batch_create_empty_list(self, mock_client: AsyncClient) -> None:
+        """test batch create with empty record list."""
+        result = await batch_create(
+            mock_client,
+            "app.bsky.feed.post",
+            [],
+            show_progress=False,
+        )
+
+        assert len(result.successful) == 0
+        assert len(result.failed) == 0
+        assert result.total == 0
+
+
+class TestReadRecordsFromStdin:
+    """tests for read_records_from_stdin function."""
+
+    def test_read_jsonl_from_stdin(self) -> None:
+        """test reading JSONL records from stdin."""
+        import io
+
+        test_input = '{"text":"post 1"}\n{"text":"post 2"}\n{"text":"post 3"}\n'
+
+        with (
+            patch("sys.stdin", io.StringIO(test_input)),
+            patch("sys.stdin.isatty", return_value=False),
+        ):
+            records = read_records_from_stdin()
+
+        assert len(records) == 3
+        assert records[0] == {"text": "post 1"}
+        assert records[1] == {"text": "post 2"}
+        assert records[2] == {"text": "post 3"}
+
+    def test_read_jsonl_with_empty_lines(self) -> None:
+        """test reading JSONL with empty lines."""
+        import io
+
+        test_input = '{"text":"post 1"}\n\n{"text":"post 2"}\n  \n{"text":"post 3"}\n'
+
+        with (
+            patch("sys.stdin", io.StringIO(test_input)),
+            patch("sys.stdin.isatty", return_value=False),
+        ):
+            records = read_records_from_stdin()
+
+        assert len(records) == 3
+        assert records[0] == {"text": "post 1"}
+
+    def test_invalid_json_raises_error(self) -> None:
+        """test invalid JSON raises ValueError."""
+        import io
+
+        test_input = '{"text":"post 1"}\ninvalid json\n'
+
+        with (
+            patch("sys.stdin", io.StringIO(test_input)),
+            patch("sys.stdin.isatty", return_value=False),
+            pytest.raises(ValueError, match="line 2: invalid JSON"),
+        ):
+            read_records_from_stdin()
+
+    def test_non_object_json_raises_error(self) -> None:
+        """test non-object JSON raises ValueError."""
+        import io
+
+        test_input = '{"text":"post 1"}\n["not", "an", "object"]\n'
+
+        with (
+            patch("sys.stdin", io.StringIO(test_input)),
+            patch("sys.stdin.isatty", return_value=False),
+            pytest.raises(ValueError, match="line 2: expected JSON object"),
+        ):
+            read_records_from_stdin()
+
+    def test_read_from_tty_returns_empty(self) -> None:
+        """test reading from TTY returns empty list."""
+        with patch("sys.stdin.isatty", return_value=True):
+            records = read_records_from_stdin()
+
+        assert records == []

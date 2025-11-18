@@ -16,8 +16,10 @@ from atproto import AsyncClient  # noqa: E402
 from pdsx import __version__  # noqa: E402
 from pdsx._internal.auth import login  # noqa: E402
 from pdsx._internal.batch import (  # noqa: E402
+    batch_create,
     batch_delete,
     display_batch_result,
+    read_records_from_stdin,
     read_uris_from_stdin,
 )
 from pdsx._internal.config import settings  # noqa: E402
@@ -83,11 +85,29 @@ async def cmd_get(
 async def cmd_create(
     client: AsyncClient,
     collection: str,
-    record: dict[str, RecordValue],
+    records: list[dict[str, RecordValue]],
+    *,
+    concurrency: int = 10,
+    fail_fast: bool = False,
 ) -> None:
-    """create a new record."""
-    response = await create_record(client, collection, record)
-    display_success("created", response.uri, response.cid, collection)
+    """create one or more records."""
+    # single record - use existing behavior for backward compatibility
+    if len(records) == 1:
+        response = await create_record(client, collection, records[0])
+        display_success("created", response.uri, response.cid, collection)
+        return
+
+    # multiple records - use batch operations
+    show_progress = sys.stdout.isatty()  # only show progress if interactive
+    result = await batch_create(
+        client,
+        collection,
+        records,
+        concurrency=concurrency,
+        fail_fast=fail_fast,
+        show_progress=show_progress,
+    )
+    display_batch_result(result, "created")
 
 
 async def cmd_update(
@@ -232,13 +252,24 @@ note: -r flag goes BEFORE the command (ls, get, etc.)
 
     # create (touch/add aliases)
     create_parser = subparsers.add_parser(
-        "create", aliases=["touch", "add"], help="create record"
+        "create", aliases=["touch", "add"], help="create record(s)"
     )
     create_parser.add_argument("collection", help="collection name")
     create_parser.add_argument(
         "fields",
-        nargs="+",
-        help="record fields as key=value pairs (e.g., title='My Song' artist='Artist')",
+        nargs="*",
+        help="record fields as key=value pairs (e.g., title='My Song' artist='Artist') - reads JSONL from stdin if not provided",
+    )
+    create_parser.add_argument(
+        "--concurrency",
+        type=int,
+        default=10,
+        help="max concurrent operations for batch create (default: 10)",
+    )
+    create_parser.add_argument(
+        "--fail-fast",
+        action="store_true",
+        help="stop on first error (default: continue on error)",
     )
 
     # update (edit alias)
@@ -335,8 +366,32 @@ note: -r flag goes BEFORE the command (ls, get, etc.)
             await cmd_get(client, args.uri, output_format=output_fmt, repo=args.repo)
 
         elif args.command in ("create", "touch", "add"):
-            record = parse_key_value_args(args.fields)
-            await cmd_create(client, args.collection, record)
+            # support batch create from stdin (JSONL) or single record from args
+            if args.fields:
+                # single record from command line args
+                record = parse_key_value_args(args.fields)
+                records = [record]
+            else:
+                # batch records from stdin (JSONL format)
+                try:
+                    records = read_records_from_stdin()
+                except ValueError as e:
+                    console.print(f"[red]error:[/red] {e}")
+                    return 1
+
+            if not records:
+                console.print(
+                    "[red]error:[/red] no records provided (use key=value arguments or pipe JSONL to stdin)"
+                )
+                return 1
+
+            await cmd_create(
+                client,
+                args.collection,
+                records,
+                concurrency=args.concurrency,
+                fail_fast=args.fail_fast,
+            )
 
         elif args.command in ("update", "edit"):
             updates = parse_key_value_args(args.fields)
