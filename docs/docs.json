@@ -34,7 +34,6 @@
               "guides/configure-for-writes",
               "guides/read-repositories",
               "guides/batch-operations",
-              "guides/uri-troubleshooting",
               "guides/crud-safety",
               "guides/blob-upload"
             ]

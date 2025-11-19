@@ -14,3 +14,6 @@ fmt:
 # type check
 check:
     uv run ty check
+
+serve-docs:
+    cd docs && bunx mint@latest dev

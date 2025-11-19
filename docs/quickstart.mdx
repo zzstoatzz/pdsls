@@ -184,7 +184,7 @@ pdsx rm app.bsky.feed.post/abc123
 ```
 
 <Note>
-if you get "invalid URI format" errors, see [AT-URI troubleshooting](/guides/uri-troubleshooting)
+if you get "invalid URI format" errors, see [troubleshooting](#invalid-uri-format) below
 </Note>
 
 ## common collections
@@ -253,14 +253,40 @@ export ATPROTO_PASSWORD=your-password
 ```
 
 ### "invalid uri format"
-```bash
-# use full at-uri or shorthand
-pdsx get at://did:plc:.../app.bsky.feed.post/abc123  # full
-pdsx get app.bsky.feed.post/abc123  # shorthand (when auth'd)
 
-# not just the rkey
-pdsx get abc123  # wrong!
+shorthand URIs (`collection/rkey`) only work when authenticated. pdsx needs your DID from the session.
+
+**fix: authenticate or use full AT-URI**
+
+```bash
+# option 1: authenticate first
+export ATPROTO_HANDLE=your.handle ATPROTO_PASSWORD=your-app-password
+pdsx get app.bsky.feed.post/3m52prkzaaq2v
+
+# option 2: use full AT-URI (no auth needed for public data)
+pdsx get at://did:plc:o53crari67ge7bvbv273lxln/app.bsky.feed.post/3m52pstmbzk2d
 ```
+
+**AT-URI format**
+
+full AT-URIs have three parts:
+
+```
+at://did:plc:44ybard66vv44zksje25o7dz/app.bsky.feed.post/3jwdwj2ctlk26
+^--^ ^------------ authority --------^ ^--- collection ---^ ^-- rkey --^
+scheme        (DID or handle)
+```
+
+**getting URIs**
+
+```bash
+# get URI from ls output
+pdsx -r zzstoatzz.io ls app.bsky.feed.post -o json | jq -r '.[0].uri'
+```
+
+<Note>
+shorthand URIs work with `get`, `update`, and `delete` commands when authenticated. read operations with `-r` flag require full AT-URIs.
+</Note>
 
 ## resources
 
