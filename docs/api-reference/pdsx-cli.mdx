@@ -10,7 +10,7 @@ general-purpose cli for atproto record operations.
 
 ## Functions
 
-### `cmd_list` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/cli.py#L46" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `cmd_list` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/cli.py#L48" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 cmd_list(client: AsyncClient, collection: str, limit: int, repo: str | None = None, cursor: str | None = None, output_format: OutputFormat | None = None) -> None
@@ -20,7 +20,7 @@ cmd_list(client: AsyncClient, collection: str, limit: int, repo: str | None = No
 list records in a collection.
 
 
-### `cmd_get` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/cli.py#L73" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `cmd_get` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/cli.py#L75" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 cmd_get(client: AsyncClient, uri: str, output_format: OutputFormat | None = None, repo: str | None = None) -> None
@@ -30,7 +30,7 @@ cmd_get(client: AsyncClient, uri: str, output_format: OutputFormat | None = None
 get a specific record.
 
 
-### `cmd_create` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/cli.py#L85" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `cmd_create` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/cli.py#L87" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 cmd_create(client: AsyncClient, collection: str, records: list[dict[str, RecordValue]]) -> None
@@ -40,17 +40,17 @@ cmd_create(client: AsyncClient, collection: str, records: list[dict[str, RecordV
 create one or more records.
 
 
-### `cmd_update` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/cli.py#L113" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `cmd_update` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/cli.py#L115" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
-cmd_update(client: AsyncClient, uri: str, updates: dict[str, RecordValue]) -> None
+cmd_update(client: AsyncClient, updates_list: list[tuple[str, dict[str, RecordValue]]]) -> None
 ```
 
 
-update an existing record.
+update one or more records.
 
 
-### `cmd_delete` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/cli.py#L123" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `cmd_delete` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/cli.py#L142" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 cmd_delete(client: AsyncClient, uris: list[str]) -> None
@@ -60,7 +60,7 @@ cmd_delete(client: AsyncClient, uris: list[str]) -> None
 delete one or more records.
 
 
-### `cmd_upload_blob` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/cli.py#L149" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `cmd_upload_blob` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/cli.py#L168" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 cmd_upload_blob(client: AsyncClient, file_path: str) -> None
@@ -70,7 +70,7 @@ cmd_upload_blob(client: AsyncClient, file_path: str) -> None
 upload a blob (image, video, etc.).
 
 
-### `async_main` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/cli.py#L170" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `async_main` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/cli.py#L189" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 async_main() -> int
@@ -80,7 +80,7 @@ async_main() -> int
 main entry point.
 
 
-### `main` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/cli.py#L430" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `main` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/cli.py#L492" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 main() -> NoReturn

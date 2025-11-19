@@ -18,8 +18,10 @@ from pdsx._internal.auth import login  # noqa: E402
 from pdsx._internal.batch import (  # noqa: E402
     batch_create,
     batch_delete,
+    batch_update,
     display_batch_result,
     read_records_from_stdin,
+    read_updates_from_stdin,
     read_uris_from_stdin,
 )
 from pdsx._internal.config import settings  # noqa: E402
@@ -112,12 +114,29 @@ async def cmd_create(
 
 async def cmd_update(
     client: AsyncClient,
-    uri: str,
-    updates: dict[str, RecordValue],
+    updates_list: list[tuple[str, dict[str, RecordValue]]],
+    *,
+    concurrency: int = 10,
+    fail_fast: bool = False,
 ) -> None:
-    """update an existing record."""
-    response = await update_record(client, uri, updates)
-    display_success("updated", response.uri, response.cid)
+    """update one or more records."""
+    # single update - use existing behavior for backward compatibility
+    if len(updates_list) == 1:
+        uri, updates = updates_list[0]
+        response = await update_record(client, uri, updates)
+        display_success("updated", response.uri, response.cid)
+        return
+
+    # multiple updates - use batch operations
+    show_progress = sys.stdout.isatty()  # only show progress if interactive
+    result = await batch_update(
+        client,
+        updates_list,
+        concurrency=concurrency,
+        fail_fast=fail_fast,
+        show_progress=show_progress,
+    )
+    display_batch_result(result, "updated")
 
 
 async def cmd_delete(
@@ -214,7 +233,7 @@ note: -r flag goes BEFORE the command (ls, get, etc.)
     )
     parser.add_argument(
         "--password",
-        help="your atproto app password (get from Bluesky settings)",
+        help="your atproto app password",
     )
     parser.add_argument(
         "--pds",
@@ -274,11 +293,26 @@ note: -r flag goes BEFORE the command (ls, get, etc.)
 
     # update (edit alias)
     update_parser = subparsers.add_parser(
-        "update", aliases=["edit"], help="update record"
+        "update", aliases=["edit"], help="update record(s)"
     )
-    update_parser.add_argument("uri", help="record AT-URI")
     update_parser.add_argument(
-        "fields", nargs="+", help="fields to update as key=value pairs"
+        "uri", nargs="?", help="record AT-URI (not required if using stdin)"
+    )
+    update_parser.add_argument(
+        "fields",
+        nargs="*",
+        help="fields to update as key=value pairs - reads JSONL from stdin if uri not provided",
+    )
+    update_parser.add_argument(
+        "--concurrency",
+        type=int,
+        default=10,
+        help="max concurrent operations for batch update (default: 10)",
+    )
+    update_parser.add_argument(
+        "--fail-fast",
+        action="store_true",
+        help="stop on first error (default: continue on error)",
     )
 
     # delete (rm alias)
@@ -394,8 +428,36 @@ note: -r flag goes BEFORE the command (ls, get, etc.)
             )
 
         elif args.command in ("update", "edit"):
-            updates = parse_key_value_args(args.fields)
-            await cmd_update(client, args.uri, updates)
+            # support batch update from stdin (JSONL) or single update from args
+            if args.uri and args.fields:
+                # single update from command line args
+                updates = parse_key_value_args(args.fields)
+                updates_list = [(args.uri, updates)]
+            elif not args.uri and not args.fields:
+                # batch updates from stdin (JSONL format with uri field)
+                try:
+                    updates_list = read_updates_from_stdin()
+                except ValueError as e:
+                    console.print(f"[red]error:[/red] {e}")
+                    return 1
+            else:
+                console.print(
+                    "[red]error:[/red] provide both uri and fields, or pipe JSONL to stdin"
+                )
+                return 1
+
+            if not updates_list:
+                console.print(
+                    "[red]error:[/red] no updates provided (use uri + key=value arguments or pipe JSONL to stdin)"
+                )
+                return 1
+
+            await cmd_update(
+                client,
+                updates_list,
+                concurrency=args.concurrency,
+                fail_fast=args.fail_fast,
+            )
 
         elif args.command in ("delete", "rm"):
             uris = args.uris if args.uris else read_uris_from_stdin()

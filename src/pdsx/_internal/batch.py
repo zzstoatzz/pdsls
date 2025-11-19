@@ -16,7 +16,7 @@ from rich.progress import (
 )
 
 from pdsx._internal.display import console
-from pdsx._internal.operations import create_record, delete_record
+from pdsx._internal.operations import create_record, delete_record, update_record
 from pdsx._internal.types import RecordValue
 
 
@@ -173,6 +173,71 @@ async def batch_create(
     return BatchResult(successful=successful, failed=failed)
 
 
+async def batch_update(
+    client: AsyncClient,
+    updates: list[tuple[str, dict[str, RecordValue]]],
+    *,
+    concurrency: int = 10,
+    fail_fast: bool = False,
+    show_progress: bool = True,
+) -> BatchResult:
+    """update multiple records concurrently.
+
+    Args:
+        client: authenticated atproto client
+        updates: list of (uri, updates_dict) tuples
+        concurrency: maximum concurrent operations (default: 10)
+        fail_fast: stop on first error (default: False)
+        show_progress: show progress bar (default: True)
+
+    Returns:
+        batch result with successful URIs and failed operations
+    """
+    successful: list[str] = []
+    failed: list[tuple[str, Exception]] = []
+    semaphore = asyncio.Semaphore(concurrency)
+
+    progress: Progress | None = None
+    task_id: TaskID | None = None
+
+    if show_progress:
+        progress = Progress(
+            SpinnerColumn(),
+            TextColumn("[bold blue]{task.description}"),
+            BarColumn(),
+            MofNCompleteColumn(),
+            TimeRemainingColumn(),
+            console=console,
+        )
+        progress.start()
+        task_id = progress.add_task("updating records", total=len(updates))
+
+    async def update_one(uri: str, update_dict: dict[str, RecordValue]) -> None:
+        """update a single record with concurrency control."""
+        async with semaphore:
+            try:
+                await update_record(client, uri, update_dict)
+                successful.append(uri)
+            except Exception as e:
+                failed.append((uri, e))
+                if fail_fast:
+                    raise
+            finally:
+                if progress and task_id is not None:
+                    progress.update(task_id, advance=1)
+
+    try:
+        await asyncio.gather(*[update_one(uri, upd) for uri, upd in updates])
+    except Exception:
+        # fail_fast raised an exception
+        pass
+    finally:
+        if progress:
+            progress.stop()
+
+    return BatchResult(successful=successful, failed=failed)
+
+
 def read_uris_from_stdin() -> list[str]:
     """read URIs from stdin, one per line.
 
@@ -215,6 +280,51 @@ def read_records_from_stdin() -> list[dict[str, RecordValue]]:
             raise ValueError(f"line {line_num}: invalid JSON - {e}") from e
 
     return records
+
+
+def read_updates_from_stdin() -> list[tuple[str, dict[str, RecordValue]]]:
+    """read JSONL update records from stdin.
+
+    each line should be a JSON object with a 'uri' field and update fields.
+
+    example:
+        {"uri": "app.bsky.feed.post/abc123", "text": "new text"}
+        {"uri": "app.bsky.feed.post/def456", "text": "another text", "langs": ["en"]}
+
+    Returns:
+        list of (uri, updates_dict) tuples
+
+    Raises:
+        ValueError: if JSON parsing fails or uri field is missing
+    """
+    import json
+
+    if sys.stdin.isatty():
+        return []
+
+    updates = []
+    for line_num, line in enumerate(sys.stdin, start=1):
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            record = json.loads(line)
+            if not isinstance(record, dict):
+                raise ValueError(
+                    f"line {line_num}: expected JSON object, got {type(record).__name__}"
+                )
+            if "uri" not in record:
+                raise ValueError(f"line {line_num}: missing 'uri' field")
+
+            uri = record.pop("uri")
+            if not isinstance(uri, str):
+                raise ValueError(f"line {line_num}: 'uri' must be a string")
+
+            updates.append((uri, record))
+        except json.JSONDecodeError as e:
+            raise ValueError(f"line {line_num}: invalid JSON - {e}") from e
+
+    return updates
 
 
 def display_batch_result(result: BatchResult, operation: str = "deleted") -> None:

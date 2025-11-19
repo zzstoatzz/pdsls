@@ -9,7 +9,9 @@ from pdsx._internal.batch import (
     BatchResult,
     batch_create,
     batch_delete,
+    batch_update,
     read_records_from_stdin,
+    read_updates_from_stdin,
     read_uris_from_stdin,
 )
 
@@ -359,3 +361,263 @@ class TestReadRecordsFromStdin:
             records = read_records_from_stdin()
 
         assert records == []
+
+
+class TestBatchUpdate:
+    """tests for batch_update function."""
+
+    async def test_batch_update_all_successful(self, mock_client: AsyncClient) -> None:
+        """test batch update with all operations successful."""
+        updates = [
+            ("at://did:plc:test123/app.bsky.feed.post/abc123", {"text": "updated 1"}),
+            ("at://did:plc:test123/app.bsky.feed.post/def456", {"text": "updated 2"}),
+            ("at://did:plc:test123/app.bsky.feed.post/ghi789", {"text": "updated 3"}),
+        ]
+
+        mock_response = MagicMock()
+        mock_response.uri = "at://did:plc:test123/app.bsky.feed.post/abc123"
+
+        with patch(
+            "pdsx._internal.batch.update_record", new_callable=AsyncMock
+        ) as mock_update:
+            mock_update.return_value = mock_response
+            result = await batch_update(
+                mock_client,
+                updates,
+                show_progress=False,
+            )
+
+        assert len(result.successful) == 3
+        assert len(result.failed) == 0
+        assert result.total == 3
+        assert result.success_rate == 100.0
+
+    async def test_batch_update_with_failures(self, mock_client: AsyncClient) -> None:
+        """test batch update with some failures."""
+        updates = [
+            ("at://did:plc:test123/app.bsky.feed.post/abc123", {"text": "updated 1"}),
+            ("at://did:plc:test123/app.bsky.feed.post/def456", {"text": "updated 2"}),
+            ("at://did:plc:test123/app.bsky.feed.post/ghi789", {"text": "updated 3"}),
+        ]
+
+        async def mock_update(
+            client: AsyncClient, uri: str, updates_dict: dict
+        ) -> MagicMock:
+            """mock update that fails on second URI."""
+            if "def456" in uri:
+                raise ValueError("simulated failure")
+            mock_response = MagicMock()
+            mock_response.uri = uri
+            return mock_response
+
+        with patch("pdsx._internal.batch.update_record", side_effect=mock_update):
+            result = await batch_update(
+                mock_client,
+                updates,
+                show_progress=False,
+            )
+
+        assert len(result.successful) == 2
+        assert len(result.failed) == 1
+        assert result.total == 3
+        assert result.success_rate == pytest.approx(66.67, rel=0.01)
+        assert result.failed[0][0] == "at://did:plc:test123/app.bsky.feed.post/def456"
+        assert isinstance(result.failed[0][1], ValueError)
+
+    async def test_batch_update_fail_fast(self, mock_client: AsyncClient) -> None:
+        """test batch update with fail_fast mode."""
+        updates = [
+            ("at://did:plc:test123/app.bsky.feed.post/abc123", {"text": "updated 1"}),
+            ("at://did:plc:test123/app.bsky.feed.post/def456", {"text": "updated 2"}),
+            ("at://did:plc:test123/app.bsky.feed.post/ghi789", {"text": "updated 3"}),
+        ]
+
+        async def mock_update(
+            client: AsyncClient, uri: str, updates_dict: dict
+        ) -> MagicMock:
+            """mock update that fails on second URI."""
+            if "def456" in uri:
+                raise ValueError("simulated failure")
+            mock_response = MagicMock()
+            mock_response.uri = uri
+            return mock_response
+
+        with patch("pdsx._internal.batch.update_record", side_effect=mock_update):
+            result = await batch_update(
+                mock_client,
+                updates,
+                fail_fast=True,
+                show_progress=False,
+            )
+
+        # with fail_fast, some operations may not complete
+        assert len(result.failed) >= 1
+        assert result.total <= 3
+
+    async def test_batch_update_with_concurrency_limit(
+        self, mock_client: AsyncClient
+    ) -> None:
+        """test batch update respects concurrency limit."""
+        import asyncio
+
+        updates = [
+            (f"at://did:plc:test123/app.bsky.feed.post/uri{i}", {"text": f"text {i}"})
+            for i in range(20)
+        ]
+
+        max_concurrent = 0
+        current_concurrent = 0
+
+        async def mock_update(
+            client: AsyncClient, uri: str, updates_dict: dict
+        ) -> MagicMock:
+            """mock update that tracks concurrency."""
+            nonlocal max_concurrent, current_concurrent
+            current_concurrent += 1
+            max_concurrent = max(max_concurrent, current_concurrent)
+            await asyncio.sleep(0.01)  # simulate work
+            current_concurrent -= 1
+            mock_response = MagicMock()
+            mock_response.uri = uri
+            return mock_response
+
+        with patch("pdsx._internal.batch.update_record", side_effect=mock_update):
+            result = await batch_update(
+                mock_client,
+                updates,
+                concurrency=5,
+                show_progress=False,
+            )
+
+        assert len(result.successful) == 20
+        assert max_concurrent <= 5
+
+    async def test_batch_update_empty_list(self, mock_client: AsyncClient) -> None:
+        """test batch update with empty update list."""
+        result = await batch_update(
+            mock_client,
+            [],
+            show_progress=False,
+        )
+
+        assert len(result.successful) == 0
+        assert len(result.failed) == 0
+        assert result.total == 0
+
+
+class TestReadUpdatesFromStdin:
+    """tests for read_updates_from_stdin function."""
+
+    def test_read_updates_from_stdin(self) -> None:
+        """test reading JSONL updates from stdin."""
+        import io
+
+        test_input = (
+            '{"uri":"at://did:plc:test123/app.bsky.feed.post/abc123","text":"new text 1"}\n'
+            '{"uri":"at://did:plc:test123/app.bsky.feed.post/def456","text":"new text 2","langs":["en"]}\n'
+            '{"uri":"at://did:plc:test123/app.bsky.feed.post/ghi789","text":"new text 3"}\n'
+        )
+
+        with (
+            patch("sys.stdin", io.StringIO(test_input)),
+            patch("sys.stdin.isatty", return_value=False),
+        ):
+            updates = read_updates_from_stdin()
+
+        assert len(updates) == 3
+        assert updates[0] == (
+            "at://did:plc:test123/app.bsky.feed.post/abc123",
+            {"text": "new text 1"},
+        )
+        assert updates[1] == (
+            "at://did:plc:test123/app.bsky.feed.post/def456",
+            {"text": "new text 2", "langs": ["en"]},
+        )
+        assert updates[2] == (
+            "at://did:plc:test123/app.bsky.feed.post/ghi789",
+            {"text": "new text 3"},
+        )
+
+    def test_read_updates_with_empty_lines(self) -> None:
+        """test reading updates with empty lines."""
+        import io
+
+        test_input = (
+            '{"uri":"at://did:plc:test123/app.bsky.feed.post/abc123","text":"new text 1"}\n'
+            "\n"
+            '{"uri":"at://did:plc:test123/app.bsky.feed.post/def456","text":"new text 2"}\n'
+            "  \n"
+            '{"uri":"at://did:plc:test123/app.bsky.feed.post/ghi789","text":"new text 3"}\n'
+        )
+
+        with (
+            patch("sys.stdin", io.StringIO(test_input)),
+            patch("sys.stdin.isatty", return_value=False),
+        ):
+            updates = read_updates_from_stdin()
+
+        assert len(updates) == 3
+        assert updates[0][0] == "at://did:plc:test123/app.bsky.feed.post/abc123"
+
+    def test_read_updates_invalid_json_raises_error(self) -> None:
+        """test invalid JSON raises ValueError."""
+        import io
+
+        test_input = '{"uri":"at://test/post/abc","text":"valid"}\ninvalid json\n'
+
+        with (
+            patch("sys.stdin", io.StringIO(test_input)),
+            patch("sys.stdin.isatty", return_value=False),
+            pytest.raises(ValueError, match="line 2: invalid JSON"),
+        ):
+            read_updates_from_stdin()
+
+    def test_read_updates_missing_uri_raises_error(self) -> None:
+        """test missing uri field raises ValueError."""
+        import io
+
+        test_input = (
+            '{"uri":"at://test/post/abc","text":"valid"}\n{"text":"no uri field"}\n'
+        )
+
+        with (
+            patch("sys.stdin", io.StringIO(test_input)),
+            patch("sys.stdin.isatty", return_value=False),
+            pytest.raises(ValueError, match="line 2: missing 'uri' field"),
+        ):
+            read_updates_from_stdin()
+
+    def test_read_updates_invalid_uri_type_raises_error(self) -> None:
+        """test non-string uri raises ValueError."""
+        import io
+
+        test_input = '{"uri":"at://test/post/abc","text":"valid"}\n{"uri":123,"text":"uri is number"}\n'
+
+        with (
+            patch("sys.stdin", io.StringIO(test_input)),
+            patch("sys.stdin.isatty", return_value=False),
+            pytest.raises(ValueError, match="line 2: 'uri' must be a string"),
+        ):
+            read_updates_from_stdin()
+
+    def test_read_updates_non_object_json_raises_error(self) -> None:
+        """test non-object JSON raises ValueError."""
+        import io
+
+        test_input = (
+            '{"uri":"at://test/post/abc","text":"valid"}\n["not","an","object"]\n'
+        )
+
+        with (
+            patch("sys.stdin", io.StringIO(test_input)),
+            patch("sys.stdin.isatty", return_value=False),
+            pytest.raises(ValueError, match="line 2: expected JSON object"),
+        ):
+            read_updates_from_stdin()
+
+    def test_read_updates_from_tty_returns_empty(self) -> None:
+        """test reading from TTY returns empty list."""
+        with patch("sys.stdin.isatty", return_value=True):
+            updates = read_updates_from_stdin()
+
+        assert updates == []
