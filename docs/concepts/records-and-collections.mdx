@@ -5,7 +5,7 @@ description: "the fundamental data model pdsx operates on"
 
 ## what is a record?
 
-a **record** is the atomic unit of data in atproto - a json object with a type and content.
+a **record** is the atomic unit of data in [ATProto](https://atproto.com/guides/overview) - a JSON object with a type and content.
 
 examples:
 - a post is a record
@@ -33,7 +33,7 @@ the `$type` field identifies which lexicon schema this record follows.
 
 ## lexicon schemas
 
-lexicons are schema definitions that specify:
+**[lexicons](https://atproto.com/specs/lexicon)** are schema definitions that specify:
 - what fields are required
 - what types those fields have
 - validation constraints
@@ -68,9 +68,9 @@ repository/
     3m4ryxwq5dt2i              ← record
 ```
 
-collection names are **nsids** (namespaced identifiers):
-- reverse-dns style: `app.bsky.feed.post`
-- scoped by authority: `app.bsky.*` is bluesky's namespace
+collection names are **[NSIDs](https://atproto.com/specs/lexicon#field-type-definitions)** (namespaced identifiers):
+- reverse-DNS style: `app.bsky.feed.post`
+- scoped by authority: `app.bsky.*` is Bluesky's namespace
 - globally unique
 
 ## common collections
@@ -93,8 +93,7 @@ within a collection, each record has a unique **rkey**:
 
 ```
 app.bsky.feed.post/3jwdwj2ctlk26
-                   └─────────────┘
-                        rkey
+                   ^--- rkey ---^
 ```
 
 ### tid format (most common)
