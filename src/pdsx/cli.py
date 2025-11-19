@@ -233,7 +233,7 @@ note: -r flag goes BEFORE the command (ls, get, etc.)
     )
     parser.add_argument(
         "--password",
-        help="your atproto app password (get from Bluesky settings)",
+        help="your atproto app password",
     )
     parser.add_argument(
         "--pds",
