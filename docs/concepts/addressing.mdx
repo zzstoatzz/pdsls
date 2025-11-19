@@ -10,11 +10,11 @@ to read or write a record, pdsx needs to know:
 2. which collection within that repository
 3. which specific record (if applicable)
 
-atproto solves this with **at-uris** and **dids**.
+[ATProto](https://atproto.com/guides/overview) solves this with **[AT-URIs](https://atproto.com/specs/at-uri-scheme)** and **[DIDs](https://atproto.com/specs/did)**.
 
-## at-uri format
+## AT-URI format
 
-at-uris identify records using this structure:
+AT-URIs identify records using this structure:
 
 ```
 at://AUTHORITY/COLLECTION/RKEY
@@ -23,29 +23,28 @@ at://AUTHORITY/COLLECTION/RKEY
 example:
 ```
 at://did:plc:44ybard66vv44zksje25o7dz/app.bsky.feed.post/3jwdwj2ctlk26
-└─┘ └────────────────────────────┘ └──────────────────┘ └─────────────┘
- │           authority                 collection           rkey
-scheme      (repository)
+^--^ ^------------ authority --------^ ^--- collection ---^ ^-- rkey --^
+scheme        (repository)
 ```
 
 components:
 - **scheme**: always `at://`
-- **authority**: did or handle identifying the repository
-- **collection**: nsid of the collection (optional)
+- **authority**: DID or [handle](https://atproto.com/specs/handle) identifying the repository
+- **collection**: NSID of the collection (optional)
 - **rkey**: record key within collection (optional)
 
-## authority: did vs handle
+## authority: DID vs handle
 
-### using dids
+### using DIDs
 
 ```
 at://did:plc:44ybard66vv44zksje25o7dz/app.bsky.feed.post/3jwdwj2ctlk26
 ```
 
-dids are:
+DIDs are:
 - **permanent**: never change
 - **decentralized**: not controlled by any provider
-- **portable**: work even if user changes pds
+- **portable**: work even if user changes PDS
 - **cryptographic**: tied to signing keys
 
 **best for**: durable references, long-term storage
@@ -60,11 +59,11 @@ handles are:
 - **human-readable**: easier to type/remember
 - **changeable**: user can update their handle
 - **reassignable**: if abandoned, someone else can claim it
-- **dns/http-based**: resolved via dns or .well-known
+- **DNS/HTTP-based**: resolved via DNS or .well-known
 
 **best for**: user-facing displays, temporary references
 
-**critical limitation**: if user changes handle, handle-based uris break or point to wrong repository.
+**critical limitation**: if user changes handle, handle-based URIs break or point to wrong repository.
 
 ## how pdsx resolves addresses
 
@@ -75,25 +74,25 @@ pdsx -r zzstoatzz.io ls app.bsky.feed.post
 ```
 
 resolution flow:
-1. resolve handle → did
-   - try dns: `_atproto.zzstoatzz.io` txt record
-   - fallback to https: `https://zzstoatzz.io/.well-known/atproto-did`
-2. resolve did → pds url
-   - fetch did document
-   - extract pds endpoint
-3. query pds for records
+1. resolve handle → DID
+   - try DNS: `_atproto.zzstoatzz.io` TXT record
+   - fallback to HTTPS: `https://zzstoatzz.io/.well-known/atproto-did`
+2. resolve DID → PDS URL
+   - fetch DID document
+   - extract PDS endpoint
+3. query PDS for records
 4. return results
 
-### with -r flag (did)
+### with -r flag (DID)
 
 ```bash
 pdsx -r did:plc:44ybard66vv44zksje25o7dz ls app.bsky.feed.post
 ```
 
 resolution flow:
-1. skip handle resolution (already have did)
-2. resolve did → pds url
-3. query pds
+1. skip handle resolution (already have DID)
+2. resolve DID → PDS URL
+3. query PDS
 4. return results
 
 ### without -r flag (authenticated)
@@ -103,12 +102,12 @@ pdsx ls app.bsky.feed.post
 ```
 
 uses authenticated session:
-1. already authenticated with pds
-2. session knows your did
+1. already authenticated with PDS
+2. session knows your DID
 3. query your own repository
 4. return results
 
-## shorthand uris in pdsx
+## shorthand URIs in pdsx
 
 <Note>
 **IMPORTANT**: Shorthand URIs (`collection/rkey`) only work when you have an active authenticated session. Without authentication, you must use full AT-URIs (`at://authority/collection/rkey`). If you see an "invalid URI format" error, this is likely why.
@@ -116,7 +115,7 @@ uses authenticated session:
 
 when authenticated, pdsx supports shorthand:
 
-### full uri
+### full URI
 
 ```bash
 pdsx get at://did:plc:your-did/app.bsky.feed.post/3jwdwj2ctlk26
@@ -129,8 +128,8 @@ pdsx get app.bsky.feed.post/3jwdwj2ctlk26
 ```
 
 pdsx automatically:
-- uses your did from session
-- constructs full uri
+- uses your DID from session
+- constructs full URI
 - executes operation
 
 this only works for **your own repository** - you're authenticated to it.

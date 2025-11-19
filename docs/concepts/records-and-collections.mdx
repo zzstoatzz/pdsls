@@ -5,7 +5,7 @@ description: "the fundamental data model pdsx operates on"
 
 ## what is a record?
 
-a **record** is the atomic unit of data in atproto - a json object with a type and content.
+a **record** is the atomic unit of data in [ATProto](https://atproto.com/guides/overview) - a JSON object with a type and content.
 
 examples:
 - a post is a record
@@ -33,7 +33,7 @@ the `$type` field identifies which lexicon schema this record follows.
 
 ## lexicon schemas
 
-lexicons are schema definitions that specify:
+**[lexicons](https://atproto.com/specs/lexicon)** are schema definitions that specify:
 - what fields are required
 - what types those fields have
 - validation constraints
@@ -50,7 +50,7 @@ app.bsky.feed.post {
 }
 ```
 
-**pdsx relies on lexicons** being defined - it doesn't create them or validate against them (yet, see issue #18).
+**pdsx relies on lexicons** being defined - it doesn't create them or validate against them (yet, see [issue #18](https://github.com/zzstoatzz/pdsx/issues/18)).
 
 ## what is a collection?
 
@@ -68,9 +68,9 @@ repository/
     3m4ryxwq5dt2i              ← record
 ```
 
-collection names are **nsids** (namespaced identifiers):
-- reverse-dns style: `app.bsky.feed.post`
-- scoped by authority: `app.bsky.*` is bluesky's namespace
+collection names are **[NSIDs](https://atproto.com/specs/lexicon#field-type-definitions)** (namespaced identifiers):
+- reverse-DNS style: `app.bsky.feed.post`
+- scoped by authority: `app.bsky.*` is Bluesky's namespace
 - globally unique
 
 ## common collections
@@ -89,12 +89,11 @@ each has a lexicon defining its structure.
 
 ## record keys (rkeys)
 
-within a collection, each record has a unique **rkey**:
+within a collection, each record has a unique **[rkey](https://atproto.com/specs/record-key)**:
 
 ```
 app.bsky.feed.post/3jwdwj2ctlk26
-                   └─────────────┘
-                        rkey
+                   ^--- rkey ---^
 ```
 
 ### tid format (most common)
@@ -239,7 +238,7 @@ pdsx create app.bsky.feed.post text='hi'
 # pdsx adds: "$type": "app.bsky.feed.post"
 ```
 
-**validation is server-side**: pdsx doesn't validate against lexicons (see issue #18)
+**validation is server-side**: pdsx doesn't validate against lexicons (see [issue #18](https://github.com/zzstoatzz/pdsx/issues/18))
 
 **records are portable**: tied to repository, not pds
 
@@ -295,7 +294,7 @@ pdsx currently doesn't validate records against lexicon schemas. this means:
 - error messages come from pds, not pdsx
 - you might waste round-trips on obvious errors
 
-tracked in issue #18.
+tracked in [issue #18](https://github.com/zzstoatzz/pdsx/issues/18).
 
 ### no schema discovery
 

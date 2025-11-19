@@ -5,17 +5,17 @@ description: "understanding the repository model and how pdsx interacts with it"
 
 ## what is a repository?
 
-in atproto, a **repository** is a user's personal data store - a signed collection of records that represents everything that user has created. each account has exactly one repository.
+in [ATProto](https://atproto.com/guides/overview), a **[repository](https://atproto.com/specs/repository)** is a user's personal data store - a signed collection of records that represents everything that user has created. each account has exactly one repository.
 
 think of it as:
 - git repo, but for database records
 - key-value store where keys are paths, values are records
 - cryptographically signed (verifiable, tamper-evident)
-- portable (can move between pds instances)
+- portable (can move between PDS instances)
 
 ## where repositories live
 
-repositories are hosted on **personal data servers (pds)**:
+repositories are hosted on **[personal data servers](https://atproto.com/guides/self-hosting) (PDS)**:
 
 ```
 user account → repository → hosted on pds
@@ -46,29 +46,29 @@ app.bsky.graph.follow/3k2y5tqw7ml2r
 ### collections
 
 collections group related records together:
-- identified by nsid (namespaced id)
+- identified by NSID (namespaced ID)
 - all records of same type go in same collection
 - examples: posts, likes, follows, profiles
 
-collections are not arbitrary - they're defined by **lexicon schemas** that specify:
+collections are not arbitrary - they're defined by **[lexicon](https://atproto.com/specs/lexicon) schemas** that specify:
 - what fields are required/optional
 - what types those fields must be
 - validation rules
 
 ### record keys (rkeys)
 
-rkeys uniquely identify a record within its collection:
+**[rkeys](https://atproto.com/specs/record-key)** uniquely identify a record within its collection:
 - most use tid (timestamp identifier) format
 - some use fixed keys (`self` for profiles)
 - chronologically sortable (tids)
 - unique within collection
 
-## merkle search tree (mst)
+## merkle search tree (MST)
 
-internally, repositories use a **merkle search tree**:
+internally, repositories use a **[merkle search tree](https://atproto.com/specs/repository#mst-structure)**:
 
 ```
-records → sorted by path → stored in mst → referenced by hash (cid)
+records → sorted by path → stored in MST → referenced by hash (CID)
 ```
 
 why this matters for pdsx:
@@ -83,7 +83,7 @@ when you use `pdsx ls app.bsky.feed.post`, you're traversing this tree to enumer
 every change creates a signed commit:
 
 ```
-change records → create new mst → sign commit → new cid
+change records → create new MST → sign commit → new CID
 ```
 
 commits form a chain:
@@ -96,20 +96,19 @@ commit 1 → commit 2 → commit 3 (current)
 - repositories have full history
 - commits are cryptographically signed (verifiable)
 
-## did as repository identifier
+## DID as repository identifier
 
-each repository is identified by its owner's **did** (decentralized identifier):
+each repository is identified by its owner's [DID](https://atproto.com/specs/did) (decentralized identifier):
 
 ```
 at://did:plc:44ybard66vv44zksje25o7dz/app.bsky.feed.post/3jwdwj2ctlk26
-      └────────────────────────────┘
-               repository
+     ^------ repository (DID) -------^
 ```
 
-the did:
-- is permanent (doesn't change if user moves pds)
+the DID:
+- is permanent (doesn't change if user moves PDS)
 - controls the repository (has signing keys)
-- resolves to pds location (via did document)
+- resolves to PDS location (via DID document)
 
 ## authentication model
 
@@ -123,7 +122,7 @@ anyone can read public records from any repository:
 pdsx -r zzstoatzz.io ls app.bsky.feed.post
 ```
 
-pdsx resolves the handle → did → pds location → fetches records
+pdsx resolves the [handle](https://atproto.com/specs/handle) → DID → PDS location → fetches records
 
 ### authenticated writes
 writing to a repository requires:
@@ -158,8 +157,8 @@ records can reference records in other repositories:
 ```
 
 the reference includes:
-- uri (which repository + collection + rkey)
-- cid (content hash for verification)
+- URI (which repository + collection + rkey)
+- CID (content hash for verification)
 
 this is a **strong reference** - includes hash to detect if referenced record changes.
 
